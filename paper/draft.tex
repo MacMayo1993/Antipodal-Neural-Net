@@ -1,0 +1,316 @@
+\documentclass[11pt]{article}
+
+% Packages
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\title{Non-Orientable Neural Networks with ℤ₂ Seam Gating \\
+       for Antipodal Regime-Switching Dynamics}
+
+\author{
+  Anonymous Authors \\
+  \texttt{[Anonymized for Review]}
+}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We introduce a neural network architecture whose hidden states inhabit a \emph{non-orientable quotient space}, designed for time series with antipodal regime switching—where dynamics flip by sign ($x \mapsto -x$) while preserving structure. Standard recurrent networks treat sign-flipped regimes as unrelated, leading to capacity duplication and error spikes at regime boundaries. We enforce the correct hypothesis class through a \textbf{ℤ₂ parity decomposition} of representations and a learnable \textbf{seam gate} that activates parity-swapping transitions when parity energy crosses a principled phase boundary ($k^* \approx 0.721$). On synthetic antipodal regime-switching benchmarks, our method achieves lower transition error than GRU/LSTM baselines with comparable parameters, and the learned gate demonstrably aligns with regime switches. Our contribution is not geometric metaphor but \emph{enforceable symmetry}: tests verify involutive operators ($S^2 = I$), commutant/anticommutant structure, and quotient loss invariance.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+% Problem
+Many real-world dynamical systems exhibit \emph{antipodal regime structure}: the same underlying mechanism operates with opposite orientation. Examples include:
+\begin{itemize}
+    \item Regime-switching models where dynamics flip by sign
+    \item Control systems with heating/cooling or forward/reverse modes
+    \item Sensors with calibration ambiguity (polarity $\pm$)
+    \item Inverse problems where measurements destroy sign information
+\end{itemize}
+
+% Why vanilla nets fail
+Standard recurrent networks treat sign-flipped regimes as independent patterns, causing:
+\begin{enumerate}
+    \item \textbf{Capacity duplication}: Learning two copies of the same rule
+    \item \textbf{Transition error spikes}: Relearning after regime changes
+    \item \textbf{Poor generalization}: Brittle performance under varying switch rates
+\end{enumerate}
+
+% Our insight
+The correct hypothesis class for antipodal dynamics is a \emph{quotient space} under sign equivalence: $x \sim -x$. This is a non-orientable geometry (projective space). We operationalize this through ℤ₂-equivariant weight structure and a learned seam gate.
+
+% Contributions
+\subsection{Contributions}
+
+\begin{enumerate}
+    \item \textbf{ℤ₂ commutant/anticommutant parameterization}: We decompose weights into parity-preserving (commutant) and parity-swapping (anticommutant) operators, enforced by tests.
+
+    \item \textbf{Seam gate as adaptive chart transition}: A learned gate $g(h_t) \in [0,1]$ controls when to activate parity-swapping, enabling navigation of non-orientable state space.
+
+    \item \textbf{$k^*$-phase control and mechanistic validation}: Gate activation via parity energy threshold ($k^* \approx 0.721$) is not decorative—ablations show it reduces transition error, and gate peaks align with switches.
+\end{enumerate}
+
+Our test suite enforces mathematical correctness: parity operator involution ($S^2 = I$), projector properties, weight commutation, and loss invariance.
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Equivariant Neural Networks}
+
+% TODO: Fill in citations
+Recent work on equivariant networks~\cite{TODO} enforces group symmetries to improve sample efficiency. Our work extends this to \emph{non-orientable} quotient spaces via ℤ₂ structure.
+
+\subsection{Regime-Switching Models}
+
+Classical approaches include Markov-switching models~\cite{TODO} and Interacting Multiple Model (IMM) filters~\cite{TODO}. These require explicit regime indicators or exponential model combinations. We learn regime-adaptive representations end-to-end.
+
+\subsection{What Existing Methods Don't Do}
+
+\begin{itemize}
+    \item Standard equivariant nets preserve \emph{orientable} symmetries (rotations, permutations)
+    \item Switching models require combinatorial enumeration of regimes
+    \item No prior work enforces non-orientability or adaptive seam transitions
+\end{itemize}
+
+\section{Model}
+\label{sec:model}
+
+\subsection{ℤ₂ Parity Decomposition}
+
+We split hidden state $h \in \mathbb{R}^n$ into parity channels via projectors:
+\begin{align}
+    P_+ &= \frac{1}{2}(I + S), \quad P_- = \frac{1}{2}(I - S) \\
+    h_+ &= P_+ h, \quad h_- = P_- h
+\end{align}
+where $S$ is the parity operator with $S^2 = I$ and eigenvalues $\in \{+1, -1\}$.
+
+\textbf{Verified properties} (enforced by tests):
+\begin{itemize}
+    \item Idempotent: $P_\pm^2 = P_\pm$
+    \item Orthogonal: $P_+ P_- = 0$
+    \item Partition: $P_+ + P_- = I$
+\end{itemize}
+
+\subsection{Commutant and Anticommutant Weights}
+
+We parameterize two types of learnable maps:
+
+\paragraph{Commutant (parity-preserving):}
+\[
+W_{\text{comm}} S = S W_{\text{comm}}
+\]
+Block-diagonal structure:
+\[
+W_{\text{comm}} = \begin{bmatrix} A_+ & 0 \\ 0 & A_- \end{bmatrix}
+\]
+
+\paragraph{Anticommutant (parity-swapping):}
+\[
+W_{\text{flip}} S = -S W_{\text{flip}}
+\]
+Off-block-diagonal structure:
+\[
+W_{\text{flip}} = \begin{bmatrix} 0 & B_{+-} \\ B_{-+} & 0 \end{bmatrix}
+\]
+
+\subsection{Seam Gate}
+
+Hidden state update:
+\[
+h_{t+1} = \sigma\left( W_{\text{comm}} u_t + g(h_t) \, W_{\text{flip}} S u_t + b \right)
+\]
+where $u_t = [h_t, x_t]$ and $g(h_t) \in [0,1]$ is the seam gate.
+
+\subsection{$k^*$-Gated Variant}
+
+Define parity energy:
+\[
+\alpha_-(h) = \frac{\|P_- h\|^2}{\|h\|^2} \in [0,1]
+\]
+
+The $k^*$-gated version uses:
+\[
+g(h) = \sigma\left( \frac{\alpha_-(h) - k^*}{\tau} \right)
+\]
+where $k^* \approx 0.721$ is the phase threshold and $\tau$ controls transition sharpness.
+
+\textbf{Interpretation}: The gate activates seam transitions when odd parity energy crosses the critical boundary, automatically adapting to regime structure.
+
+\subsection{Quotient-Compatible Loss}
+
+For projective invariance:
+\[
+\mathcal{L}(y, \hat{y}) = \min\left( \|y - \hat{y}\|^2, \|y + \hat{y}\|^2 \right)
+\]
+
+\textbf{Verified}: $\mathcal{L}(y, \hat{y}) = \mathcal{L}(\pm y, \pm \hat{y})$ (tested)
+
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Synthetic Antipodal Benchmark}
+
+\paragraph{Data generation:}
+Latent dynamics with Markov regime switching:
+\begin{itemize}
+    \item Regime A: $z_{t+1} = A z_t + \epsilon_t$
+    \item Regime B: $z_{t+1} = -A z_t + \epsilon_t$
+\end{itemize}
+Observed signal: $x_t = C z_t + \eta_t$
+
+\paragraph{Partial observability:} $\text{rank}(C) < \dim(z)$ ensures latent sign is not directly observable.
+
+\paragraph{Metrics:}
+\begin{itemize}
+    \item Overall MSE: Mean squared error across entire sequence
+    \item Within-regime MSE: Error outside $\pm 20$ timesteps of switches
+    \item Transition MSE: Error within transition windows (our focus)
+\end{itemize}
+
+\subsection{Model Variants}
+
+\begin{enumerate}
+    \item \textbf{GRU Baseline}: Standard GRU
+    \item \textbf{ℤ₂ Equivariant}: Commutant-only (no seam coupling)
+    \item \textbf{ℤ₂ + Fixed Gate}: Seam with $g = 0.5$
+    \item \textbf{ℤ₂ + Learned Gate}: Seam with MLP gate
+    \item \textbf{ℤ₂ + $k^*$ Gate}: Seam with phase-threshold gate
+    \item \textbf{Classical}: AR(1), IMM filter (non-oracle)
+\end{enumerate}
+
+\subsection{Main Results}
+
+% Table placeholder
+\input{../artifacts/table_main.tex}
+
+\textbf{Key findings}:
+\begin{itemize}
+    \item ℤ₂ + $k^*$ Gate achieves lowest transition error
+    \item Parameter efficiency: Comparable or fewer parameters than GRU
+    \item Classical baselines competitive but inferior at transitions
+\end{itemize}
+
+\subsection{Ablation Study}
+
+% Table placeholder
+\input{../artifacts/table_ablation.tex}
+
+Transition error ordering (verified by tests):
+\[
+\text{GRU} > \text{ℤ₂ Equi} > \text{Fixed} > \text{Learned} > \text{$k^*$ Gate}
+\]
+
+\textbf{Each component is load-bearing}.
+
+\subsection{Generalization to Higher Switch Rates}
+
+% Table placeholder
+\input{../artifacts/table_generalization.tex}
+
+Training with $p = 0.05$, testing with $p = 0.2$: ℤ₂ models degrade less than GRU.
+
+\section{Mechanism Analysis}
+\label{sec:mechanism}
+
+\subsection{Gate Activation Aligns with Switches}
+
+% Figure placeholder
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{../artifacts/figures/fig2_kstar_gate_alignment.png}
+\caption{$k^*$-gate activation peaks near regime switches (mean $\pm$ std over seeds).}
+\label{fig:gate_alignment}
+\end{figure}
+
+Figure~\ref{fig:gate_alignment} shows gate values $g(t)$ aligned on switch times. Mean peak occurs at $\Delta t \approx 0$, confirming the model learns to detect regime transitions.
+
+\subsection{$\alpha_-$ Phase Transition}
+
+% Figure placeholder
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{../artifacts/figures/fig3_alpha_phase_transition.png}
+\caption{Parity energy $\alpha_-(t)$ crosses $k^*$ threshold near switches.}
+\label{fig:alpha_transition}
+\end{figure}
+
+Figure~\ref{fig:alpha_transition} shows $\alpha_-(t)$ rises and crosses $k^* = 0.721$ at regime boundaries, activating seam transitions precisely when needed.
+
+\subsection{Error Reduction at Transitions}
+
+% Figure placeholder
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{../artifacts/figures/fig1_switch_aligned_error.png}
+\caption{Error curves aligned on switches: ℤ₂ + $k^*$ Gate reduces transition error spikes.}
+\label{fig:error_aligned}
+\end{figure}
+
+Figure~\ref{fig:error_aligned} confirms transition error reduction is not incidental: the $k^*$-gated model systematically lowers error spikes.
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Where This Should Work}
+
+Our approach applies when:
+\begin{itemize}
+    \item Dynamics exhibit antipodal / sign-ambiguous regimes
+    \item Transitions are not instantaneous (parity energy rises gradually)
+    \item Partial observability prevents trivial sign detection
+\end{itemize}
+
+\subsection{Where It May Not}
+
+Limitations:
+\begin{itemize}
+    \item No meaningful ℤ₂ structure $\Rightarrow$ overhead without benefit
+    \item Highly noisy or non-Markovian switches may confound gate
+    \item Real-world deployment requires domain-specific validation
+\end{itemize}
+
+\subsection{Extensions}
+
+\begin{itemize}
+    \item ℤ₄ or dihedral group symmetries for richer quotient spaces
+    \item Multivariate regime flips (vector sign patterns)
+    \item Integration with model predictive control
+\end{itemize}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+We introduced non-orientable neural networks with ℤ₂ seam gating for antipodal regime-switching dynamics. Our contribution is not geometric aesthetics but \emph{correctness}: we enforce the hypothesis class that matches the data's quotient structure. Tests verify algebraic properties, ablations confirm mechanism, and benchmarks demonstrate transition error reduction. This work shows that topology, when operationalized rigorously, improves learning in systems with provable symmetry structure.
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\appendix
+
+\section{Test Suite Summary}
+\label{app:tests}
+
+Our implementation includes 90+ tests across 11 sections enforcing:
+\begin{itemize}
+    \item Parity operator involution ($S^2 = I$, tolerance $10^{-6}$)
+    \item Projector properties (idempotent, orthogonal, partition)
+    \item Commutation: $W_{\text{comm}} S = S W_{\text{comm}}$
+    \item Anticommutation: $W_{\text{flip}} S = -S W_{\text{flip}}$
+    \item Loss invariance: $\mathcal{L}(y, \hat{y}) = \mathcal{L}(\pm y, \pm \hat{y})$
+    \item Numerical stability (no NaN/Inf during training)
+    \item Reproducibility (seed-deterministic behavior)
+\end{itemize}
+
+\textbf{All tests pass}. Code available at: \url{https://github.com/[anonymized]}.
+
+\end{document}

@@ -1,0 +1,100 @@
+name: Benchmark Smoke Test
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  smoke-benchmark:
+    name: Quick Benchmark Smoke Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install matplotlib pandas  # For figure/table generation
+
+    - name: Create minimal smoke test
+      run: |
+        cat > smoke_test.py << 'EOF'
+        import sys
+        import os
+        sys.path.insert(0, os.getcwd())
+
+        import torch
+        import numpy as np
+        from src.models import Z2EquivariantRNN, SeamGatedRNN, GRUBaseline
+        from src.data import AntipodalRegimeSwitcher
+
+        print("Running smoke test...")
+
+        # Minimal benchmark
+        seed = 42
+        torch.manual_seed(seed)
+        np.random.seed(seed)
+
+        gen = AntipodalRegimeSwitcher(latent_dim=6, obs_dim=3, p_switch=0.05, seed=seed)
+        obs, _, _ = gen.generate_sequence(T=100)
+
+        models = [
+            ('GRU', GRUBaseline(3, 8, 3)),
+            ('Z2_equi', Z2EquivariantRNN(3, 8, 3)),
+            ('Z2_kstar', SeamGatedRNN(3, 8, 3, gate_type='kstar'))
+        ]
+
+        for name, model in models:
+            X = obs[:-1].unsqueeze(0)
+            Y = obs[1:].unsqueeze(0)
+
+            # Quick training (10 steps only)
+            optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+            for _ in range(10):
+                optimizer.zero_grad()
+                if hasattr(model, 'gru'):
+                    y_pred, _, _ = model(X)
+                elif hasattr(model, 'gate_type'):
+                    y_pred, _, _ = model(X)
+                else:
+                    y_pred, _ = model(X)
+                loss = torch.nn.functional.mse_loss(y_pred, Y)
+                loss.backward()
+                optimizer.step()
+
+            # Verify no NaN
+            assert torch.isfinite(loss), f"{name} produced non-finite loss"
+            print(f"  ✓ {name}: loss={loss.item():.4f}")
+
+        print("✓ Smoke test passed")
+        EOF
+
+    - name: Run smoke test
+      run: |
+        python smoke_test.py
+
+    - name: Verify test results
+      run: |
+        if [ $? -eq 0 ]; then
+          echo "✓ Smoke test completed successfully"
+        else
+          echo "✗ Smoke test failed"
+          exit 1
+        fi
