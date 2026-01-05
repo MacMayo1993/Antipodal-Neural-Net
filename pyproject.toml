@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "antipodal-neural-net"
+version = "0.1.0"
+authors = [
+    { name = "MacMayo1993", email = "macmayo1993@users.noreply.github.com" }
+]
+description = "Antipodal Neural Networks with ℤ₂ seam gating for regime-switching time series"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+dependencies = [
+    "torch>=2.0",
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "matplotlib>=3.5",
+    "pandas>=1.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/MacMayo1993/Antipodal-Neural-Net"
+Documentation = "https://github.com/MacMayo1993/Antipodal-Neural-Net#readme"
+Repository = "https://github.com/MacMayo1993/Antipodal-Neural-Net"
+Issues = "https://github.com/MacMayo1993/Antipodal-Neural-Net/issues"
+
+[project.scripts]
+antipodal-train = "src.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "-v --tb=short"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py39']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | build
+  | dist
+)/
+'''
