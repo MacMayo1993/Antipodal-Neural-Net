@@ -1,5 +1,10 @@
 # Antipodal Neural Networks
 
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/MacMayo1993/Antipodal-Neural-Net/actions)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 **Non-Orientable Neural Networks with ℤ₂ Seam Gating for Regime-Switching Dynamics**
 
 This repository implements neural network architectures with **non-orientable internal geometry** designed for time series with antipodal regime switching—where dynamics flip by sign (x ↦ -x) but preserve structure.
@@ -9,11 +14,33 @@ This repository implements neural network architectures with **non-orientable in
 ### Installation
 
 ```bash
-pip install -r requirements.txt
+# Clone the repository
+git clone https://github.com/MacMayo1993/Antipodal-Neural-Net.git
+cd Antipodal-Neural-Net
 
-# For benchmarks and figures (optional)
-pip install matplotlib pandas
+# Install in development mode
+pip install -e .
+
+# Or install dependencies directly
+pip install -r requirements.txt
 ```
+
+### Basic Usage
+
+```python
+from src import SeamGatedRNN, AntipodalRegimeSwitcher
+
+# Generate synthetic data
+generator = AntipodalRegimeSwitcher(latent_dim=8, obs_dim=4, p_switch=0.05)
+obs, latents, regimes = generator.generate_sequence(T=1000)
+
+# Create model with k*-based seam gating
+model = SeamGatedRNN(input_dim=4, hidden_dim=16, output_dim=4, gate_type='kstar')
+
+# Train your model...
+```
+
+See [`examples/train_simple.py`](examples/train_simple.py) for a complete training example and [`examples/inference.py`](examples/inference.py) for inference.
 
 ### Running Tests
 
@@ -54,11 +81,16 @@ See `scripts/README.md` for detailed documentation.
 ```
 Antipodal-Neural-Net/
 ├── src/                   # Core implementation
+│   ├── __init__.py        # Public API exports
+│   ├── cli.py             # Command-line interface
 │   ├── parity.py          # ℤ₂ parity operators and projectors
 │   ├── data.py            # Antipodal regime-switching data generator
 │   ├── models.py          # Neural network models (equivariant, seam-gated, GRU)
 │   ├── losses.py          # Quotient and rank-1 projector losses
 │   └── baselines.py       # Classical baselines (AR(1), IMM filter)
+├── examples/              # Usage examples
+│   ├── train_simple.py    # Complete training example
+│   └── inference.py       # Inference and analysis example
 ├── tests/                 # Comprehensive test suite (90+ tests)
 │   ├── test_01_data_generator.py        # Data generation tests
 │   ├── test_02_parity_structure.py      # ℤ₂ structural invariance tests
@@ -91,8 +123,9 @@ Antipodal-Neural-Net/
 ├── PROJECT_INTENT.md      # Detailed project goals and design
 ├── CONTRIBUTING.md        # Development guidelines
 ├── CHANGELOG.md           # Version history
+├── pyproject.toml         # Package configuration
 ├── requirements.txt       # Python dependencies
-└── pytest.ini            # Pytest configuration
+└── LICENSE                # MIT License
 ```
 
 ## Core Concepts
