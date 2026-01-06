@@ -1,5 +1,5 @@
 """
-Antipodal Neural Networks with $‚ Seam Gating
+Antipodal Neural Networks with Z_2 Seam Gating
 
 A library for non-orientable neural networks with parity structure,
 designed for regime-switching time series with antipodal symmetry.
