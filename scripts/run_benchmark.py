@@ -16,6 +16,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
+import argparse
 import torch
 import torch.optim as optim
 import numpy as np
@@ -250,15 +251,51 @@ def run_single_seed(seed, obs_dim=4, hidden_dim=16, p_switch_train=0.05,
 
 def main():
     """Run full benchmark"""
+    parser = argparse.ArgumentParser(
+        description="Run full benchmark for Antipodal Neural Networks"
+    )
+    parser.add_argument(
+        '--seeds',
+        type=int,
+        nargs='+',
+        default=[42, 123, 456, 789, 1011],
+        help='Random seeds to use (default: 42 123 456 789 1011)'
+    )
+    parser.add_argument(
+        '--outdir',
+        type=str,
+        default='artifacts',
+        help='Output directory for results (default: artifacts)'
+    )
+    parser.add_argument(
+        '--device',
+        type=str,
+        default='cpu',
+        choices=['cpu', 'cuda'],
+        help='Device to use (default: cpu)'
+    )
+    parser.add_argument(
+        '--steps',
+        type=int,
+        default=500,
+        help='Training steps per model (default: 500)'
+    )
+    args = parser.parse_args()
+
     print("=" * 60)
     print("Running Non-Orientable Neural Network Benchmark")
     print("=" * 60)
+    print(f"Seeds: {args.seeds}")
+    print(f"Device: {args.device}")
+    print(f"Training steps: {args.steps}")
+    print(f"Output: {args.outdir}/metrics.csv")
+    print("=" * 60)
 
     # Configuration
-    seeds = [42, 123, 456, 789, 1011]
+    seeds = args.seeds
     obs_dim = 4
     hidden_dim = 16
-    train_steps = 500
+    train_steps = args.steps
 
     # Standard benchmark
     print("\n[1/2] Standard benchmark (p_switch=0.05)")
@@ -278,7 +315,7 @@ def main():
         all_results.extend(results)
 
     # Write to CSV
-    output_path = Path(__file__).parent.parent / 'artifacts' / 'metrics.csv'
+    output_path = Path(args.outdir) / 'metrics.csv'
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     fieldnames = ['seed', 'model', 'overall_mse', 'within_mse', 'transition_mse',
