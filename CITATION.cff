@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Antipodal Neural Networks with ℤ₂ Seam Gating"
+authors:
+  - family-names: "Mayo"
+    given-names: "Mac"
+    alias: "MacMayo1993"
+repository-code: "https://github.com/MacMayo1993/Antipodal-Neural-Net"
+url: "https://github.com/MacMayo1993/Antipodal-Neural-Net"
+abstract: >-
+  Neural network architectures with non-orientable internal geometry
+  designed for time series with antipodal regime switching, where
+  dynamics flip by sign (x ↦ -x) but preserve structure.
+keywords:
+  - neural networks
+  - time series
+  - regime switching
+  - topology
+  - non-orientable geometry
+  - parity structure
+  - seam gating
+license: MIT
+version: 0.1.0
+date-released: "2026-01-06"

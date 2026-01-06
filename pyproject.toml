@@ -41,17 +41,22 @@ Issues = "https://github.com/MacMayo1993/Antipodal-Neural-Net/issues"
 
 [project.scripts]
 antipodal-train = "src.cli:main"
+antipodal-demo = "src.cli:demo"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["src*"]
+[tool.setuptools]
+packages = ["src"]
+
+[tool.setuptools.package-data]
+src = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
 addopts = "-v --tb=short"
 markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "slow: marks tests as slow (use -m 'slow' to run only these)",
+    "integration: marks tests as integration tests",
+    "benchmark: marks tests as benchmarks",
 ]
 
 [tool.black]
