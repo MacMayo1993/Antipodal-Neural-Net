@@ -72,7 +72,13 @@ class AntipodalRegimeSwitcher:
         spectral_radius = torch.max(torch.abs(eigenvalues)).item()
 
         if spectral_radius > 0.95:
-            A = A * (0.95 / spectral_radius)
+            # Scale to ensure spectral radius < 0.95
+            A = A * (0.95 / max(spectral_radius, 1e-6))
+
+            # Verify stability after scaling
+            eigenvalues = torch.linalg.eigvals(A)
+            spectral_radius = torch.max(torch.abs(eigenvalues)).item()
+            assert spectral_radius < 1.0, f"Failed to stabilize dynamics: spectral radius = {spectral_radius}"
 
         return A
 

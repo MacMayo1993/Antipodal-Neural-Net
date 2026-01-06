@@ -48,9 +48,10 @@ def rank1_projector_loss(y_true: torch.Tensor, y_pred: torch.Tensor) -> torch.Te
     Returns:
         Scalar loss
     """
-    # Normalize to unit vectors
-    y_true = F.normalize(y_true, dim=-1)
-    y_pred = F.normalize(y_pred, dim=-1)
+    # Normalize to unit vectors (add epsilon for numerical stability)
+    eps = 1e-8
+    y_true = F.normalize(y_true + eps, dim=-1)
+    y_pred = F.normalize(y_pred + eps, dim=-1)
 
     # Compute outer products (batch, dim, dim)
     P_true = y_true.unsqueeze(-1) @ y_true.unsqueeze(-2)
