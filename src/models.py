@@ -94,9 +94,9 @@ class Z2EquivariantRNN(nn.Module):
 
     def step(self, x: torch.Tensor, h: torch.Tensor) -> torch.Tensor:
         """Single RNN step with commutant weights only"""
-        # Project h into parity subspaces
-        h_even = self.projectors.project_plus(h)
-        h_odd = self.projectors.project_minus(h)
+        # Extract even and odd components directly (first even_dim, last odd_dim)
+        h_even = h[..., :self.even_dim]
+        h_odd = h[..., self.even_dim:]
 
         # Concatenate input with respective parity channels
         u_even = torch.cat([x, h_even], dim=-1)
@@ -246,25 +246,26 @@ class SeamGatedRNN(nn.Module):
         # Compute gate
         g = self.compute_gate(h)
 
-        # Project h into parity subspaces
-        h_even = self.projectors.project_plus(h)
-        h_odd = self.projectors.project_minus(h)
+        # Extract even and odd components directly
+        h_even = h[..., :self.even_dim]
+        h_odd = h[..., self.even_dim:]
 
         # Concatenate input
         u_even = torch.cat([x, h_even], dim=-1)
         u_odd = torch.cat([x, h_odd], dim=-1)
-
-        # Apply parity operator to u
-        u = torch.cat([x, h], dim=-1)
-        S_u = self._apply_parity_to_concat(u)
 
         # Commutant contribution (parity-preserving)
         h_comm_even = self.W_even(u_even)
         h_comm_odd = self.W_odd(u_odd)
 
         # Anticommutant contribution (parity-swapping) with S applied
-        u_even_flipped = torch.cat([x, self.projectors.project_plus(h @ self.S.T)], dim=-1)
-        u_odd_flipped = torch.cat([x, self.projectors.project_minus(h @ self.S.T)], dim=-1)
+        # Apply S to h and extract components
+        h_flipped = h @ self.S.T
+        h_flipped_even = h_flipped[..., :self.even_dim]
+        h_flipped_odd = h_flipped[..., self.even_dim:]
+
+        u_even_flipped = torch.cat([x, h_flipped_even], dim=-1)
+        u_odd_flipped = torch.cat([x, h_flipped_odd], dim=-1)
 
         h_flip_odd = self.W_even_to_odd(u_even_flipped)
         h_flip_even = self.W_odd_to_even(u_odd_flipped)
