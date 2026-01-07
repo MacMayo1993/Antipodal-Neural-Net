@@ -11,7 +11,7 @@ import torch.nn as nn
 import numpy as np
 
 
-class ParityOperator:
+class ParityOperator(nn.Module):
     """
     Parity operator S for ℤ₂ symmetry.
 
@@ -26,28 +26,46 @@ class ParityOperator:
         Args:
             dim: Total dimension of state space
             even_dim: Dimension of even subspace (defaults to dim//2)
-        """
-        self.dim = dim
-        self.even_dim = even_dim if even_dim is not None else dim // 2
-        self.odd_dim = dim - self.even_dim
 
-        # Construct S = diag(+1, ..., +1, -1, ..., -1)
-        self.S = torch.diag(torch.cat([
+        Raises:
+            AssertionError: If dimension constraints are violated
+        """
+        super().__init__()
+
+        self.dim = dim
+
+        # Enforce parity splitting constraints
+        if even_dim is None:
+            # Default split requires even dimension
+            assert dim % 2 == 0, (
+                f"hidden_dim must be even when even_dim is not specified. "
+                f"Got hidden_dim={dim}. Either use even hidden_dim or provide even_dim explicitly."
+            )
+            self.even_dim = dim // 2
+        else:
+            # Custom split must be valid
+            assert 0 < even_dim < dim, (
+                f"even_dim must satisfy 0 < even_dim < dim. "
+                f"Got even_dim={even_dim}, dim={dim}."
+            )
+            self.even_dim = even_dim
+
+        self.odd_dim = dim - self.even_dim
+        assert self.odd_dim > 0, f"odd_dim must be positive. Got odd_dim={self.odd_dim}"
+
+        # Construct S = diag(+1, ..., +1, -1, ..., -1) and register as buffer
+        S = torch.diag(torch.cat([
             torch.ones(self.even_dim),
             -torch.ones(self.odd_dim)
         ]))
+        self.register_buffer('S', S)
 
     def __call__(self, h):
         """Apply parity operator: S @ h"""
         return h @ self.S.T if h.dim() > 1 else self.S @ h
 
-    def to(self, device):
-        """Move operator to device"""
-        self.S = self.S.to(device)
-        return self
 
-
-class ParityProjectors:
+class ParityProjectors(nn.Module):
     """
     Projectors onto even/odd subspaces.
 
@@ -62,14 +80,29 @@ class ParityProjectors:
         """
         Args:
             parity_op: ParityOperator instance
+
+        Raises:
+            AssertionError: If parity operator constraints are violated
         """
-        self.S = parity_op.S
+        super().__init__()
+
+        assert isinstance(parity_op, ParityOperator), (
+            f"parity_op must be a ParityOperator instance. Got {type(parity_op)}"
+        )
         self.dim = parity_op.dim
 
-        # Construct projectors
-        I = torch.eye(self.dim)
-        self.P_plus = 0.5 * (I + self.S)
-        self.P_minus = 0.5 * (I - self.S)
+        # Verify even/odd dimensions are positive
+        assert parity_op.even_dim > 0, f"even_dim must be positive. Got {parity_op.even_dim}"
+        assert parity_op.odd_dim > 0, f"odd_dim must be positive. Got {parity_op.odd_dim}"
+
+        # Construct projectors and register as buffers
+        I = torch.eye(self.dim, device=parity_op.S.device)
+        P_plus = 0.5 * (I + parity_op.S)
+        P_minus = 0.5 * (I - parity_op.S)
+
+        self.register_buffer('S', parity_op.S)
+        self.register_buffer('P_plus', P_plus)
+        self.register_buffer('P_minus', P_minus)
 
     def project_plus(self, h):
         """Project onto even subspace: P₊ @ h"""
@@ -93,21 +126,14 @@ class ParityProjectors:
         norm_h_sq = (h ** 2).sum(dim=-1)
         norm_h_minus_sq = (h_minus ** 2).sum(dim=-1)
 
-        # Avoid division by zero
+        # Avoid division by zero - use h.new_zeros for device consistency
         alpha_minus = torch.where(
             norm_h_sq > 1e-8,
             norm_h_minus_sq / norm_h_sq,
-            torch.zeros_like(norm_h_sq)
+            h.new_zeros(norm_h_sq.shape)
         )
 
         return alpha_minus
-
-    def to(self, device):
-        """Move projectors to device"""
-        self.S = self.S.to(device)
-        self.P_plus = self.P_plus.to(device)
-        self.P_minus = self.P_minus.to(device)
-        return self
 
 
 def verify_involution(S: torch.Tensor, tol: float = 1e-6) -> bool:

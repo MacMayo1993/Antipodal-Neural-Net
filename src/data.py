@@ -11,6 +11,8 @@ import torch
 import numpy as np
 from typing import Tuple, Optional
 
+from .seed import set_seed as _set_seed
+
 
 class AntipodalRegimeSwitcher:
     """
@@ -52,9 +54,9 @@ class AntipodalRegimeSwitcher:
         self.obs_noise_std = obs_noise_std
         self.latent_noise_std = latent_noise_std
 
+        # Use unified seeding
         if seed is not None:
-            torch.manual_seed(seed)
-            np.random.seed(seed)
+            _set_seed(seed)
 
         # Generate stable dynamics matrix A
         self.A = self._generate_stable_dynamics()
@@ -97,7 +99,8 @@ class AntipodalRegimeSwitcher:
         self,
         T: int,
         initial_regime: int = 0,
-        initial_state: Optional[torch.Tensor] = None
+        initial_state: Optional[torch.Tensor] = None,
+        generator: Optional[torch.Generator] = None
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Generate antipodal regime-switching sequence.
@@ -106,6 +109,7 @@ class AntipodalRegimeSwitcher:
             T: Sequence length
             initial_regime: Initial regime (0 or 1)
             initial_state: Initial latent state (if None, sample from N(0, I))
+            generator: Optional torch.Generator for reproducible randomness
 
         Returns:
             observations: (T, obs_dim) tensor
@@ -114,7 +118,7 @@ class AntipodalRegimeSwitcher:
         """
         # Initialize
         if initial_state is None:
-            z = torch.randn(self.latent_dim)
+            z = torch.randn(self.latent_dim, generator=generator)
         else:
             z = initial_state.clone()
 
@@ -130,12 +134,12 @@ class AntipodalRegimeSwitcher:
             regimes.append(regime)
 
             # Generate observation
-            obs_noise = torch.randn(self.obs_dim) * self.obs_noise_std
+            obs_noise = torch.randn(self.obs_dim, generator=generator) * self.obs_noise_std
             x = self.C @ z + obs_noise
             observations.append(x)
 
             # Evolve latent state
-            latent_noise = torch.randn(self.latent_dim) * self.latent_noise_std
+            latent_noise = torch.randn(self.latent_dim, generator=generator) * self.latent_noise_std
 
             if regime == 0:
                 z_next = self.A @ z + latent_noise
@@ -144,8 +148,8 @@ class AntipodalRegimeSwitcher:
 
             z = z_next
 
-            # Regime switching (Markov)
-            if np.random.rand() < self.p_switch:
+            # Regime switching (Markov) - use torch.rand instead of np.random.rand
+            if torch.rand(1, generator=generator).item() < self.p_switch:
                 regime = 1 - regime
 
         return (
@@ -213,15 +217,25 @@ def create_train_test_split(
         train_data: dict with 'obs', 'latents', 'regimes'
         test_data: dict with 'obs', 'latents', 'regimes'
     """
+    # Create generators for reproducibility
+    train_gen = None
+    test_gen = None
+
     if seed is not None:
-        torch.manual_seed(seed)
-        np.random.seed(seed)
+        _set_seed(seed)
+        from .seed import create_generator
+        train_gen = create_generator(seed)
+        test_gen = create_generator(seed + 1)
 
     # Generate train sequence
-    train_obs, train_latents, train_regimes = generator.generate_sequence(train_length)
+    train_obs, train_latents, train_regimes = generator.generate_sequence(
+        train_length, generator=train_gen
+    )
 
     # Generate test sequence
-    test_obs, test_latents, test_regimes = generator.generate_sequence(test_length)
+    test_obs, test_latents, test_regimes = generator.generate_sequence(
+        test_length, generator=test_gen
+    )
 
     train_data = {
         'obs': train_obs,
