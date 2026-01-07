@@ -4,15 +4,15 @@ Section 5: Loss Function Tests
 Tests for quotient loss and rank-1 projector loss.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from src.losses import (
     quotient_loss,
     rank1_projector_loss,
     verify_quotient_invariance,
-    verify_rank1_equivalence
+    verify_rank1_equivalence,
 )
 
 
@@ -44,12 +44,9 @@ class TestQuotientLoss:
         L_flip_pred = quotient_loss(y, -y_pred)
         L_flip_both = quotient_loss(-y, -y_pred)
 
-        assert torch.allclose(L_base, L_flip_y, atol=1e-6), \
-            "L(y, ŷ) ≠ L(-y, ŷ)"
-        assert torch.allclose(L_base, L_flip_pred, atol=1e-6), \
-            "L(y, ŷ) ≠ L(y, -ŷ)"
-        assert torch.allclose(L_base, L_flip_both, atol=1e-6), \
-            "L(y, ŷ) ≠ L(-y, -ŷ)"
+        assert torch.allclose(L_base, L_flip_y, atol=1e-6), "L(y, ŷ) ≠ L(-y, ŷ)"
+        assert torch.allclose(L_base, L_flip_pred, atol=1e-6), "L(y, ŷ) ≠ L(y, -ŷ)"
+        assert torch.allclose(L_base, L_flip_both, atol=1e-6), "L(y, ŷ) ≠ L(-y, -ŷ)"
 
     def test_quotient_loss_minimum_distance(self):
         """Verify quotient loss uses minimum distance"""
@@ -96,12 +93,15 @@ class TestRank1Loss:
         L_flip_pred = rank1_projector_loss(y, -y_pred)
         L_flip_both = rank1_projector_loss(-y, -y_pred)
 
-        assert torch.allclose(L_base, L_flip_y, atol=1e-6), \
-            "Rank-1 loss not invariant to y sign flip"
-        assert torch.allclose(L_base, L_flip_pred, atol=1e-6), \
-            "Rank-1 loss not invariant to ŷ sign flip"
-        assert torch.allclose(L_base, L_flip_both, atol=1e-6), \
-            "Rank-1 loss not invariant to both sign flips"
+        assert torch.allclose(
+            L_base, L_flip_y, atol=1e-6
+        ), "Rank-1 loss not invariant to y sign flip"
+        assert torch.allclose(
+            L_base, L_flip_pred, atol=1e-6
+        ), "Rank-1 loss not invariant to ŷ sign flip"
+        assert torch.allclose(
+            L_base, L_flip_both, atol=1e-6
+        ), "Rank-1 loss not invariant to both sign flips"
 
     def test_rank1_loss_perfect_match(self):
         """Verify rank-1 loss is zero for perfect match"""

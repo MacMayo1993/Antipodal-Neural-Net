@@ -2,9 +2,9 @@
 Pytest configuration and fixtures for the test suite.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 
 def pytest_configure(config):
@@ -24,4 +24,4 @@ def reset_random_seeds():
 @pytest.fixture
 def device():
     """Provide device for tests"""
-    return torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")

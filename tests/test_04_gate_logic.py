@@ -4,9 +4,9 @@ Section 4: Gate Logic Tests
 Tests for seam gate computation and k* threshold behavior.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from src.models import SeamGatedRNN
 from src.parity import ParityOperator, ParityProjectors
@@ -26,10 +26,10 @@ class TestKStarThreshold:
             input_dim=3,
             hidden_dim=8,
             output_dim=2,
-            gate_type='kstar',
+            gate_type="kstar",
             kstar=kstar,
             tau=tau,
-            even_dim=4
+            even_dim=4,
         )
 
         # Create states with varying α₋
@@ -67,8 +67,7 @@ class TestKStarThreshold:
         idx_kstar = torch.argmin(torch.abs(alpha_values - kstar))
         g_at_kstar = gate_values[idx_kstar]
 
-        assert abs(g_at_kstar - 0.5) < 0.1, \
-            f"g(k*) = {g_at_kstar}, expected ≈ 0.5"
+        assert abs(g_at_kstar - 0.5) < 0.1, f"g(k*) = {g_at_kstar}, expected ≈ 0.5"
 
     def test_kstar_gate_endpoints(self):
         """Verify gate approaches 0 for α₋→0 and 1 for α₋→1"""
@@ -76,10 +75,10 @@ class TestKStarThreshold:
             input_dim=3,
             hidden_dim=8,
             output_dim=2,
-            gate_type='kstar',
+            gate_type="kstar",
             kstar=0.721,
             tau=0.1,
-            even_dim=4
+            even_dim=4,
         )
 
         # State with α₋ ≈ 0 (all even)
@@ -102,11 +101,7 @@ class TestLearnedGate:
     def test_learned_gate_range(self):
         """Verify learned gate output ∈ (0,1)"""
         model = SeamGatedRNN(
-            input_dim=3,
-            hidden_dim=8,
-            output_dim=2,
-            gate_type='learned',
-            even_dim=4
+            input_dim=3, hidden_dim=8, output_dim=2, gate_type="learned", even_dim=4
         )
 
         torch.manual_seed(42)
@@ -114,17 +109,14 @@ class TestLearnedGate:
 
         g = model.compute_gate(h_batch)
 
-        assert torch.all(g >= 0) and torch.all(g <= 1), \
-            f"Learned gate outside [0,1]: min={g.min()}, max={g.max()}"
+        assert torch.all(g >= 0) and torch.all(
+            g <= 1
+        ), f"Learned gate outside [0,1]: min={g.min()}, max={g.max()}"
 
     def test_learned_gate_gradients(self):
         """Verify gradients flow through learned gate"""
         model = SeamGatedRNN(
-            input_dim=3,
-            hidden_dim=8,
-            output_dim=2,
-            gate_type='learned',
-            even_dim=4
+            input_dim=3, hidden_dim=8, output_dim=2, gate_type="learned", even_dim=4
         )
 
         h = torch.randn(1, 8, requires_grad=True)
@@ -144,15 +136,11 @@ class TestLearnedGate:
 class TestGateTypes:
     """Test different gate configurations"""
 
-    @pytest.mark.parametrize("gate_type", ['fixed', 'learned', 'kstar'])
+    @pytest.mark.parametrize("gate_type", ["fixed", "learned", "kstar"])
     def test_all_gate_types_work(self, gate_type):
         """Verify all gate types produce valid outputs"""
         model = SeamGatedRNN(
-            input_dim=3,
-            hidden_dim=8,
-            output_dim=2,
-            gate_type=gate_type,
-            even_dim=4
+            input_dim=3, hidden_dim=8, output_dim=2, gate_type=gate_type, even_dim=4
         )
 
         x = torch.randn(2, 5, 3)

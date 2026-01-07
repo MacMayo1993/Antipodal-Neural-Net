@@ -7,35 +7,38 @@ Generates:
 - fig3_alpha_phase_transition.png: α₋ phase transition around switches
 """
 
-import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+import sys
 
-import torch
-import numpy as np
-import matplotlib.pyplot as plt
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 from pathlib import Path
 
-from src.models import Z2EquivariantRNN, SeamGatedRNN, GRUBaseline
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+
 from src.data import AntipodalRegimeSwitcher, find_regime_switches
+from src.models import GRUBaseline, SeamGatedRNN, Z2EquivariantRNN
 from src.parity import ParityProjectors
 
-
 # Publication styling
-plt.rcParams.update({
-    'font.size': 10,
-    'axes.labelsize': 10,
-    'axes.titlesize': 11,
-    'xtick.labelsize': 9,
-    'ytick.labelsize': 9,
-    'legend.fontsize': 9,
-    'figure.dpi': 150,
-    'savefig.dpi': 300,
-    'savefig.bbox': 'tight'
-})
+plt.rcParams.update(
+    {
+        "font.size": 10,
+        "axes.labelsize": 10,
+        "axes.titlesize": 11,
+        "xtick.labelsize": 9,
+        "ytick.labelsize": 9,
+        "legend.fontsize": 9,
+        "figure.dpi": 150,
+        "savefig.dpi": 300,
+        "savefig.bbox": "tight",
+    }
+)
 
 
-def collect_switch_aligned_errors(model, test_obs, test_regimes, window=30, device='cpu'):
+def collect_switch_aligned_errors(model, test_obs, test_regimes, window=30, device="cpu"):
     """Collect errors aligned around regime switches"""
     model.to(device)
     model.eval()
@@ -45,10 +48,10 @@ def collect_switch_aligned_errors(model, test_obs, test_regimes, window=30, devi
 
     # Forward pass
     with torch.no_grad():
-        if hasattr(model, 'gru'):
+        if hasattr(model, "gru"):
             Y_pred, _, _ = model(X.unsqueeze(0))
             Y_pred = Y_pred.squeeze(0)
-        elif hasattr(model, 'gate_type'):
+        elif hasattr(model, "gate_type"):
             Y_pred, _, _ = model(X.unsqueeze(0))
             Y_pred = Y_pred.squeeze(0)
         else:
@@ -83,9 +86,9 @@ def collect_switch_aligned_errors(model, test_obs, test_regimes, window=30, devi
         return None
 
 
-def collect_gate_aligned(model, test_obs, test_regimes, window=30, device='cpu'):
+def collect_gate_aligned(model, test_obs, test_regimes, window=30, device="cpu"):
     """Collect gate values aligned around regime switches"""
-    if not hasattr(model, 'gate_type'):
+    if not hasattr(model, "gate_type"):
         return None
 
     model.to(device)
@@ -120,9 +123,9 @@ def collect_gate_aligned(model, test_obs, test_regimes, window=30, device='cpu')
         return None
 
 
-def collect_alpha_aligned(model, test_obs, test_regimes, window=30, device='cpu'):
+def collect_alpha_aligned(model, test_obs, test_regimes, window=30, device="cpu"):
     """Collect α₋ values aligned around regime switches"""
-    if not hasattr(model, 'projectors'):
+    if not hasattr(model, "projectors"):
         return None
 
     model.to(device)
@@ -180,10 +183,13 @@ def generate_figure1(seeds, obs_dim=4, hidden_dim=16, output_path=None):
 
     window = 30
     model_configs = [
-        ('GRU', lambda: GRUBaseline(obs_dim, hidden_dim, obs_dim), 'C0'),
-        ('ℤ₂ Comm Only', lambda: Z2EquivariantRNN(obs_dim, hidden_dim, obs_dim), 'C1'),
-        ('ℤ₂ + k* Gate', lambda: SeamGatedRNN(obs_dim, hidden_dim, obs_dim,
-                                               gate_type='kstar', kstar=0.721), 'C2'),
+        ("GRU", lambda: GRUBaseline(obs_dim, hidden_dim, obs_dim), "C0"),
+        ("ℤ₂ Comm Only", lambda: Z2EquivariantRNN(obs_dim, hidden_dim, obs_dim), "C1"),
+        (
+            "ℤ₂ + k* Gate",
+            lambda: SeamGatedRNN(obs_dim, hidden_dim, obs_dim, gate_type="kstar", kstar=0.721),
+            "C2",
+        ),
     ]
 
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
@@ -219,13 +225,14 @@ def generate_figure1(seeds, obs_dim=4, hidden_dim=16, output_path=None):
             # Plot
             x = np.arange(-window, window + 1)
             ax.plot(x, mean_error, label=model_name, color=color, linewidth=1.5)
-            ax.fill_between(x, mean_error - std_error, mean_error + std_error,
-                           alpha=0.2, color=color)
+            ax.fill_between(
+                x, mean_error - std_error, mean_error + std_error, alpha=0.2, color=color
+            )
 
-    ax.axvline(0, color='k', linestyle='--', linewidth=1, alpha=0.5, label='Switch')
-    ax.set_xlabel('Time offset from switch')
-    ax.set_ylabel('MSE')
-    ax.set_title('Error Aligned on Regime Switches')
+    ax.axvline(0, color="k", linestyle="--", linewidth=1, alpha=0.5, label="Switch")
+    ax.set_xlabel("Time offset from switch")
+    ax.set_ylabel("MSE")
+    ax.set_title("Error Aligned on Regime Switches")
     ax.legend(frameon=False)
     ax.grid(True, alpha=0.3)
 
@@ -254,7 +261,7 @@ def generate_figure2(seeds, obs_dim=4, hidden_dim=16, output_path=None):
         test_obs, _, test_regimes = gen.generate_sequence(T=500)
 
         # k*-gated model
-        model = SeamGatedRNN(obs_dim, hidden_dim, obs_dim, gate_type='kstar', kstar=0.721)
+        model = SeamGatedRNN(obs_dim, hidden_dim, obs_dim, gate_type="kstar", kstar=0.721)
         # In real usage, load pre-trained model
 
         aligned = collect_gate_aligned(model, test_obs, test_regimes, window=window)
@@ -272,15 +279,14 @@ def generate_figure2(seeds, obs_dim=4, hidden_dim=16, output_path=None):
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 
     x = np.arange(-window, window + 1)
-    ax.plot(x, mean_gate, color='C3', linewidth=1.5)
-    ax.fill_between(x, mean_gate - std_gate, mean_gate + std_gate,
-                    alpha=0.2, color='C3')
-    ax.axvline(0, color='k', linestyle='--', linewidth=1, alpha=0.5, label='Switch')
-    ax.axhline(0.5, color='gray', linestyle=':', linewidth=1, alpha=0.5)
+    ax.plot(x, mean_gate, color="C3", linewidth=1.5)
+    ax.fill_between(x, mean_gate - std_gate, mean_gate + std_gate, alpha=0.2, color="C3")
+    ax.axvline(0, color="k", linestyle="--", linewidth=1, alpha=0.5, label="Switch")
+    ax.axhline(0.5, color="gray", linestyle=":", linewidth=1, alpha=0.5)
 
-    ax.set_xlabel('Time offset from switch')
-    ax.set_ylabel('Gate value g(t)')
-    ax.set_title('k*-Gate Activation Aligned on Regime Switches')
+    ax.set_xlabel("Time offset from switch")
+    ax.set_ylabel("Gate value g(t)")
+    ax.set_title("k*-Gate Activation Aligned on Regime Switches")
     ax.set_ylim([0, 1])
     ax.legend(frameon=False)
     ax.grid(True, alpha=0.3)
@@ -311,7 +317,7 @@ def generate_figure3(seeds, obs_dim=4, hidden_dim=16, output_path=None):
         test_obs, _, test_regimes = gen.generate_sequence(T=500)
 
         # k*-gated model
-        model = SeamGatedRNN(obs_dim, hidden_dim, obs_dim, gate_type='kstar', kstar=kstar)
+        model = SeamGatedRNN(obs_dim, hidden_dim, obs_dim, gate_type="kstar", kstar=kstar)
         # In real usage, load pre-trained model
 
         aligned = collect_alpha_aligned(model, test_obs, test_regimes, window=window)
@@ -329,15 +335,14 @@ def generate_figure3(seeds, obs_dim=4, hidden_dim=16, output_path=None):
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
 
     x = np.arange(-window, window + 1)
-    ax.plot(x, mean_alpha, color='C4', linewidth=1.5)
-    ax.fill_between(x, mean_alpha - std_alpha, mean_alpha + std_alpha,
-                    alpha=0.2, color='C4')
-    ax.axvline(0, color='k', linestyle='--', linewidth=1, alpha=0.5, label='Switch')
-    ax.axhline(kstar, color='C2', linestyle=':', linewidth=1.5, alpha=0.7, label=f'k* = {kstar}')
+    ax.plot(x, mean_alpha, color="C4", linewidth=1.5)
+    ax.fill_between(x, mean_alpha - std_alpha, mean_alpha + std_alpha, alpha=0.2, color="C4")
+    ax.axvline(0, color="k", linestyle="--", linewidth=1, alpha=0.5, label="Switch")
+    ax.axhline(kstar, color="C2", linestyle=":", linewidth=1.5, alpha=0.7, label=f"k* = {kstar}")
 
-    ax.set_xlabel('Time offset from switch')
-    ax.set_ylabel('Parity energy α₋(t)')
-    ax.set_title('α₋ Phase Transition at Regime Switches')
+    ax.set_xlabel("Time offset from switch")
+    ax.set_ylabel("Parity energy α₋(t)")
+    ax.set_title("α₋ Phase Transition at Regime Switches")
     ax.set_ylim([0, 1])
     ax.legend(frameon=False)
     ax.grid(True, alpha=0.3)
@@ -364,26 +369,29 @@ def main():
 
     # Output paths
     base_path = Path(__file__).parent.parent
-    fig_dir = base_path / 'artifacts' / 'figures'
+    fig_dir = base_path / "artifacts" / "figures"
     fig_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate figures
     print("\n[1/3] Figure 1: Switch-aligned error curves")
-    generate_figure1(seeds, obs_dim, hidden_dim,
-                     output_path=fig_dir / 'fig1_switch_aligned_error.png')
+    generate_figure1(
+        seeds, obs_dim, hidden_dim, output_path=fig_dir / "fig1_switch_aligned_error.png"
+    )
 
     print("\n[2/3] Figure 2: k*-gate activation")
-    generate_figure2(seeds, obs_dim, hidden_dim,
-                     output_path=fig_dir / 'fig2_kstar_gate_alignment.png')
+    generate_figure2(
+        seeds, obs_dim, hidden_dim, output_path=fig_dir / "fig2_kstar_gate_alignment.png"
+    )
 
     print("\n[3/3] Figure 3: α₋ phase transition")
-    generate_figure3(seeds, obs_dim, hidden_dim,
-                     output_path=fig_dir / 'fig3_alpha_phase_transition.png')
+    generate_figure3(
+        seeds, obs_dim, hidden_dim, output_path=fig_dir / "fig3_alpha_phase_transition.png"
+    )
 
     print("\n" + "=" * 60)
     print("✓ All figures generated successfully")
     print("=" * 60)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

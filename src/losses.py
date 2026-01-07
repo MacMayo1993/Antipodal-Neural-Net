@@ -59,16 +59,13 @@ def rank1_projector_loss(y_true: torch.Tensor, y_pred: torch.Tensor) -> torch.Te
 
     # Frobenius norm squared
     diff = P_true - P_pred
-    loss = (diff ** 2).sum(dim=(-2, -1))
+    loss = (diff**2).sum(dim=(-2, -1))
 
     return loss.mean()
 
 
 def verify_quotient_invariance(
-    loss_fn,
-    y: torch.Tensor,
-    y_pred: torch.Tensor,
-    tol: float = 1e-6
+    loss_fn, y: torch.Tensor, y_pred: torch.Tensor, tol: float = 1e-6
 ) -> bool:
     """
     Verify loss is invariant to sign flips.
@@ -95,17 +92,13 @@ def verify_quotient_invariance(
     checks = [
         torch.abs(L_base - L_flip_y) < tol,
         torch.abs(L_base - L_flip_pred) < tol,
-        torch.abs(L_base - L_flip_both) < tol
+        torch.abs(L_base - L_flip_both) < tol,
     ]
 
     return all(checks)
 
 
-def verify_rank1_equivalence(
-    y: torch.Tensor,
-    y_pred: torch.Tensor,
-    tol: float = 1e-5
-) -> bool:
+def verify_rank1_equivalence(y: torch.Tensor, y_pred: torch.Tensor, tol: float = 1e-5) -> bool:
     """
     Verify rank-1 loss is equivalent to min-distance quotient loss.
 

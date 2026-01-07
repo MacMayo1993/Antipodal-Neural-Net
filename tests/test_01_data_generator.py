@@ -4,12 +4,11 @@ Section 1: Data Generator Tests
 Tests for the antipodal regime switching data generator.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from src.data import AntipodalRegimeSwitcher, find_regime_switches
-
 
 # Test seeds for reproducibility
 TEST_SEEDS = [42, 123, 456, 789, 1011]
@@ -24,12 +23,7 @@ class TestAntipodalDynamics:
         Verify that latent dynamics are exactly antipodal:
         A z + (-A)(-z) ≈ 0
         """
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=10,
-            obs_dim=5,
-            p_switch=0.05,
-            seed=seed
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=10, obs_dim=5, p_switch=0.05, seed=seed)
 
         # Test with random latent states
         torch.manual_seed(seed)
@@ -47,11 +41,7 @@ class TestAntipodalDynamics:
 
     def test_dynamics_matrices_stable(self):
         """Verify dynamics matrix A has spectral radius < 1"""
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=10,
-            obs_dim=5,
-            seed=42
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=10, obs_dim=5, seed=42)
 
         eigenvalues = torch.linalg.eigvals(generator.A)
         spectral_radius = torch.max(torch.abs(eigenvalues)).item()
@@ -67,12 +57,7 @@ class TestRegimeSwitching:
         """
         Verify empirical switch rate matches theoretical probability.
         """
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=10,
-            obs_dim=5,
-            p_switch=p_switch,
-            seed=42
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=10, obs_dim=5, p_switch=p_switch, seed=42)
 
         # Generate long sequence
         T = 50000
@@ -85,16 +70,13 @@ class TestRegimeSwitching:
 
         error = abs(empirical_rate - p_switch)
 
-        assert error < tolerance, \
-            f"Switch rate mismatch: expected {p_switch:.4f}, got {empirical_rate:.4f} (error {error:.4f} > tol {tolerance:.4f})"
+        assert (
+            error < tolerance
+        ), f"Switch rate mismatch: expected {p_switch:.4f}, got {empirical_rate:.4f} (error {error:.4f} > tol {tolerance:.4f})"
 
     def test_regime_sequence_validity(self):
         """Verify regime sequence contains only 0 and 1"""
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=10,
-            obs_dim=5,
-            seed=42
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=10, obs_dim=5, seed=42)
 
         _, _, regimes = generator.generate_sequence(T=1000)
 
@@ -112,30 +94,24 @@ class TestPartialObservability:
         latent_dim = 10
         obs_dim = 6
 
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=latent_dim,
-            obs_dim=obs_dim,
-            seed=42
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=latent_dim, obs_dim=obs_dim, seed=42)
 
         rank = generator.verify_observation_rank()
 
-        assert rank < latent_dim, \
-            f"Observation matrix not rank-deficient: rank={rank}, latent_dim={latent_dim}"
+        assert (
+            rank < latent_dim
+        ), f"Observation matrix not rank-deficient: rank={rank}, latent_dim={latent_dim}"
 
     @pytest.mark.parametrize("latent_dim,obs_dim", [(10, 5), (20, 10), (8, 4)])
     def test_rank_deficiency_various_dims(self, latent_dim, obs_dim):
         """Test rank deficiency for various dimensions"""
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=latent_dim,
-            obs_dim=obs_dim,
-            seed=42
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=latent_dim, obs_dim=obs_dim, seed=42)
 
         rank = generator.verify_observation_rank()
 
-        assert rank < latent_dim, \
-            f"Rank deficiency failed for dim={latent_dim}, obs={obs_dim}: rank={rank}"
+        assert (
+            rank < latent_dim
+        ), f"Rank deficiency failed for dim={latent_dim}, obs={obs_dim}: rank={rank}"
 
 
 class TestSequenceGeneration:
@@ -143,11 +119,7 @@ class TestSequenceGeneration:
 
     def test_sequence_shapes(self):
         """Verify generated sequences have correct shapes"""
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=10,
-            obs_dim=5,
-            seed=42
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=10, obs_dim=5, seed=42)
 
         T = 100
         obs, latents, regimes = generator.generate_sequence(T)
@@ -158,11 +130,7 @@ class TestSequenceGeneration:
 
     def test_initial_state_propagation(self):
         """Verify initial state is used correctly"""
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=10,
-            obs_dim=5,
-            seed=42
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=10, obs_dim=5, seed=42)
 
         initial_state = torch.ones(10)
         _, latents, _ = generator.generate_sequence(T=10, initial_state=initial_state)
@@ -172,11 +140,7 @@ class TestSequenceGeneration:
 
     def test_no_nans_in_sequence(self):
         """Verify generated sequences contain no NaN or Inf values"""
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=10,
-            obs_dim=5,
-            seed=42
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=10, obs_dim=5, seed=42)
 
         obs, latents, regimes = generator.generate_sequence(T=1000)
 
@@ -194,8 +158,9 @@ class TestRegimeSwitchDetection:
 
         expected_switches = torch.tensor([3, 6, 8])
 
-        assert torch.equal(switch_times, expected_switches), \
-            f"Switch detection incorrect: got {switch_times}, expected {expected_switches}"
+        assert torch.equal(
+            switch_times, expected_switches
+        ), f"Switch detection incorrect: got {switch_times}, expected {expected_switches}"
 
     def test_transition_window_mask(self):
         """Verify transition window mask is created correctly"""

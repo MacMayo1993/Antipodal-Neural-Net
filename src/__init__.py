@@ -7,11 +7,8 @@ designed for regime-switching time series with antipodal symmetry.
 
 __version__ = "0.1.0"
 
-# Core models
-from .models import Z2EquivariantRNN, SeamGatedRNN, GRUBaseline
-
-# Parity operators
-from .parity import ParityOperator, ParityProjectors
+# Baselines
+from .baselines import AR1Model, IMMFilter
 
 # Data generation
 from .data import AntipodalRegimeSwitcher, find_regime_switches
@@ -19,8 +16,11 @@ from .data import AntipodalRegimeSwitcher, find_regime_switches
 # Loss functions
 from .losses import quotient_loss, rank1_projector_loss
 
-# Baselines
-from .baselines import AR1Model, IMMFilter
+# Core models
+from .models import GRUBaseline, SeamGatedRNN, Z2EquivariantRNN
+
+# Parity operators
+from .parity import ParityOperator, ParityProjectors
 
 __all__ = [
     # Models

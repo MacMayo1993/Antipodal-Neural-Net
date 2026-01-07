@@ -4,13 +4,12 @@ Section 10: Reproducibility Tests
 Tests for deterministic behavior across seeds and runs.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
-from src.models import SeamGatedRNN, Z2EquivariantRNN
 from src.data import AntipodalRegimeSwitcher
-
+from src.models import SeamGatedRNN, Z2EquivariantRNN
 
 TEST_SEEDS = [42, 123, 456, 789, 1011]
 
@@ -39,10 +38,7 @@ class TestSeedStability:
         """Verify model forward pass is reproducible with fixed seed"""
         seed = 42
 
-        model = SeamGatedRNN(
-            input_dim=4, hidden_dim=12, output_dim=4,
-            gate_type='kstar'
-        )
+        model = SeamGatedRNN(input_dim=4, hidden_dim=12, output_dim=4, gate_type="kstar")
 
         # Set seed and run forward
         torch.manual_seed(seed)
@@ -68,18 +64,13 @@ class TestSeedStability:
         have bounded variance.
         """
         # Generate data with this seed
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=8, obs_dim=4, p_switch=0.05, seed=seed
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=8, obs_dim=4, p_switch=0.05, seed=seed)
 
         obs, _, regimes = generator.generate_sequence(T=200)
 
         # Create and run model (no training, just forward pass)
         torch.manual_seed(seed)
-        model = SeamGatedRNN(
-            input_dim=4, hidden_dim=12, output_dim=4,
-            gate_type='kstar'
-        )
+        model = SeamGatedRNN(input_dim=4, hidden_dim=12, output_dim=4, gate_type="kstar")
 
         with torch.no_grad():
             y_pred, _, gates = model(obs[:-1].unsqueeze(0))
@@ -100,15 +91,11 @@ class TestSeedStability:
             np.random.seed(seed)
 
             # Generate data
-            generator = AntipodalRegimeSwitcher(
-                latent_dim=8, obs_dim=4, p_switch=0.05, seed=seed
-            )
+            generator = AntipodalRegimeSwitcher(latent_dim=8, obs_dim=4, p_switch=0.05, seed=seed)
             obs, _, _ = generator.generate_sequence(T=200)
 
             # Create model
-            model = Z2EquivariantRNN(
-                input_dim=4, hidden_dim=12, output_dim=4
-            )
+            model = Z2EquivariantRNN(input_dim=4, hidden_dim=12, output_dim=4)
 
             with torch.no_grad():
                 y_pred, _ = model(obs[:-1].unsqueeze(0))
@@ -139,16 +126,10 @@ class TestDeterminism:
     def test_model_initialization_with_seed(self):
         """Verify model initialization is reproducible with seed"""
         torch.manual_seed(42)
-        model1 = SeamGatedRNN(
-            input_dim=4, hidden_dim=12, output_dim=4,
-            gate_type='learned'
-        )
+        model1 = SeamGatedRNN(input_dim=4, hidden_dim=12, output_dim=4, gate_type="learned")
 
         torch.manual_seed(42)
-        model2 = SeamGatedRNN(
-            input_dim=4, hidden_dim=12, output_dim=4,
-            gate_type='learned'
-        )
+        model2 = SeamGatedRNN(input_dim=4, hidden_dim=12, output_dim=4, gate_type="learned")
 
         # Check parameters are equal
         for p1, p2 in zip(model1.parameters(), model2.parameters()):

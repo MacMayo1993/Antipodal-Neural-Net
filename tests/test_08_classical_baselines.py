@@ -4,9 +4,9 @@ Section 8: Classical Baseline Tests
 Tests for AR(1) and IMM filter baselines.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from src.baselines import AR1Model, IMMFilter, compute_transition_error_spike
 from src.data import AntipodalRegimeSwitcher
@@ -117,11 +117,11 @@ class TestIMMFilter:
 
         for t, mode_probs in enumerate(mode_probs_history):
             sum_probs = mode_probs.sum()
-            assert abs(sum_probs - 1.0) < 1e-6, \
-                f"Mode probs don't sum to 1 at t={t}: {sum_probs}"
+            assert abs(sum_probs - 1.0) < 1e-6, f"Mode probs don't sum to 1 at t={t}: {sum_probs}"
 
-            assert np.all((mode_probs >= 0) & (mode_probs <= 1)), \
-                f"Mode probs outside [0,1] at t={t}: {mode_probs}"
+            assert np.all(
+                (mode_probs >= 0) & (mode_probs <= 1)
+            ), f"Mode probs outside [0,1] at t={t}: {mode_probs}"
 
     def test_imm_transition_error_spike(self):
         """
@@ -129,12 +129,7 @@ class TestIMMFilter:
         (compared to stable regions)
         """
         # Generate regime-switching data
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=6,
-            obs_dim=3,
-            p_switch=0.1,
-            seed=42
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=6, obs_dim=3, p_switch=0.1, seed=42)
 
         observations, _, regimes = generator.generate_sequence(T=500)
 
@@ -172,22 +167,19 @@ class TestTransitionErrorMetric:
         regimes = torch.zeros(100, dtype=torch.long)
         regimes[50:] = 1  # Switch at t=50
 
-        transition_error, stable_error = compute_transition_error_spike(
-            errors, regimes, window=3
-        )
+        transition_error, stable_error = compute_transition_error_spike(errors, regimes, window=3)
 
         # Transition window [47:54] should have higher error
-        assert transition_error > stable_error, \
-            f"Transition error ({transition_error}) not higher than stable ({stable_error})"
+        assert (
+            transition_error > stable_error
+        ), f"Transition error ({transition_error}) not higher than stable ({stable_error})"
 
     def test_no_transitions(self):
         """Test transition error when there are no regime changes"""
         errors = torch.ones(100)
         regimes = torch.zeros(100, dtype=torch.long)  # No switches
 
-        transition_error, stable_error = compute_transition_error_spike(
-            errors, regimes, window=5
-        )
+        transition_error, stable_error = compute_transition_error_spike(errors, regimes, window=5)
 
         # No transitions, so transition_error should be 0 or equal to stable
         assert transition_error == 0.0 or abs(transition_error - stable_error) < 1e-6

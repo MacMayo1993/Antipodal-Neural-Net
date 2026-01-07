@@ -4,20 +4,20 @@ Section 2: ℤ₂ Structural Invariance Tests
 Tests for parity operators, projectors, and symmetry properties.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from src.parity import (
     ParityOperator,
     ParityProjectors,
-    verify_involution,
-    verify_eigenvalues,
-    verify_projector_properties,
-    verify_commutation,
-    verify_anticommutation,
+    construct_anticommutant_weight,
     construct_commutant_weight,
-    construct_anticommutant_weight
+    verify_anticommutation,
+    verify_commutation,
+    verify_eigenvalues,
+    verify_involution,
+    verify_projector_properties,
 )
 
 
@@ -76,10 +76,10 @@ class TestProjectors:
 
         checks = verify_projector_properties(projectors.P_plus, projectors.P_minus)
 
-        assert checks['idempotent_plus'], "P₊² ≠ P₊"
-        assert checks['idempotent_minus'], "P₋² ≠ P₋"
-        assert checks['orthogonal'], "P₊P₋ ≠ 0"
-        assert checks['partition'], "P₊ + P₋ ≠ I"
+        assert checks["idempotent_plus"], "P₊² ≠ P₊"
+        assert checks["idempotent_minus"], "P₋² ≠ P₋"
+        assert checks["orthogonal"], "P₊P₋ ≠ 0"
+        assert checks["partition"], "P₊ + P₋ ≠ I"
 
     def test_parity_energy_bounds(self):
         """
@@ -103,14 +103,15 @@ class TestProjectors:
             h_plus = projectors.project_plus(h)
             h_minus = projectors.project_minus(h)
 
-            norm_h_sq = (h ** 2).sum()
-            norm_plus_sq = (h_plus ** 2).sum()
-            norm_minus_sq = (h_minus ** 2).sum()
+            norm_h_sq = (h**2).sum()
+            norm_plus_sq = (h_plus**2).sum()
+            norm_minus_sq = (h_minus**2).sum()
 
             alpha_plus = norm_plus_sq / norm_h_sq if norm_h_sq > 1e-8 else 0
 
-            assert abs(alpha_plus + alpha_minus - 1.0) < 1e-5, \
-                f"α₊ + α₋ = {alpha_plus + alpha_minus} ≠ 1"
+            assert (
+                abs(alpha_plus + alpha_minus - 1.0) < 1e-5
+            ), f"α₊ + α₋ = {alpha_plus + alpha_minus} ≠ 1"
 
     def test_projection_preserves_norm_partition(self):
         """Verify ||P₊h||² + ||P₋h||² = ||h||²"""
@@ -127,8 +128,7 @@ class TestProjectors:
         norm_plus = torch.norm(h_plus) ** 2
         norm_minus = torch.norm(h_minus) ** 2
 
-        assert abs(norm_plus + norm_minus - norm_h) < 1e-6, \
-            "Norm partition violated"
+        assert abs(norm_plus + norm_minus - norm_h) < 1e-6, "Norm partition violated"
 
 
 class TestCommutantWeights:
@@ -162,8 +162,7 @@ class TestCommutantWeights:
 
         W_comm = construct_commutant_weight(A_plus, A_minus, parity_op)
 
-        assert verify_commutation(W_comm, parity_op.S), \
-            f"Commutation failed for seed {seed}"
+        assert verify_commutation(W_comm, parity_op.S), f"Commutation failed for seed {seed}"
 
 
 class TestAnticommutantWeights:
@@ -229,8 +228,9 @@ class TestAnticommutantWeights:
 
         W_flip = construct_anticommutant_weight(B_plus_minus, B_minus_plus, parity_op)
 
-        assert verify_anticommutation(W_flip, parity_op.S), \
-            f"Anticommutation failed for seed {seed}"
+        assert verify_anticommutation(
+            W_flip, parity_op.S
+        ), f"Anticommutation failed for seed {seed}"
 
 
 class TestParityStructureConsistency:
@@ -246,8 +246,7 @@ class TestParityStructureConsistency:
         h_flipped = parity_op(h)
         h_double_flipped = parity_op(h_flipped)
 
-        assert torch.allclose(h, h_double_flipped, atol=1e-6), \
-            "S(Sh) ≠ h"
+        assert torch.allclose(h, h_double_flipped, atol=1e-6), "S(Sh) ≠ h"
 
     def test_projector_sum_identity(self):
         """Verify (P₊ + P₋)h = h for any h"""
@@ -261,8 +260,7 @@ class TestParityStructureConsistency:
         h_minus = projectors.project_minus(h)
         h_reconstructed = h_plus + h_minus
 
-        assert torch.allclose(h, h_reconstructed, atol=1e-6), \
-            "(P₊ + P₋)h ≠ h"
+        assert torch.allclose(h, h_reconstructed, atol=1e-6), "(P₊ + P₋)h ≠ h"
 
 
 if __name__ == "__main__":

@@ -7,11 +7,12 @@ Implements:
 - Standard baselines (GRU)
 """
 
+from typing import Optional, Tuple
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from typing import Optional, Tuple
 
 from .parity import ParityOperator, ParityProjectors
 
@@ -26,11 +27,7 @@ class Z2EquivariantRNN(nn.Module):
     """
 
     def __init__(
-        self,
-        input_dim: int,
-        hidden_dim: int,
-        output_dim: int,
-        even_dim: Optional[int] = None
+        self, input_dim: int, hidden_dim: int, output_dim: int, even_dim: Optional[int] = None
     ):
         super().__init__()
 
@@ -63,7 +60,9 @@ class Z2EquivariantRNN(nn.Module):
         # Output layer
         self.output_layer = nn.Linear(hidden_dim, output_dim)
 
-    def forward(self, x: torch.Tensor, h: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(
+        self, x: torch.Tensor, h: Optional[torch.Tensor] = None
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Args:
             x: (batch, seq_len, input_dim) or (batch, input_dim)
@@ -101,9 +100,20 @@ class Z2EquivariantRNN(nn.Module):
 
     def step(self, x: torch.Tensor, h: torch.Tensor) -> torch.Tensor:
         """Single RNN step with commutant weights only"""
+        # Track if either input is unbatched (1D) - if so, return unbatched output
+        x_was_1d = x.dim() == 1
+        h_was_1d = h.dim() == 1
+        return_1d = x_was_1d or h_was_1d
+
+        # Ensure both inputs have batch dimension for consistent processing
+        if x_was_1d:
+            x = x.unsqueeze(0)
+        if h_was_1d:
+            h = h.unsqueeze(0)
+
         # Extract even and odd components directly (first even_dim, last odd_dim)
-        h_even = h[..., :self.even_dim]
-        h_odd = h[..., self.even_dim:]
+        h_even = h[..., : self.even_dim]
+        h_odd = h[..., self.even_dim :]
 
         # Concatenate input with respective parity channels
         u_even = torch.cat([x, h_even], dim=-1)
@@ -119,6 +129,10 @@ class Z2EquivariantRNN(nn.Module):
         # Activation
         h_next = torch.tanh(h_next)
 
+        # Restore original dimensionality - squeeze if either input was 1D
+        if return_1d and h_next.size(0) == 1:
+            h_next = h_next.squeeze(0)
+
         return h_next
 
     def get_weight_matrices(self) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -130,12 +144,14 @@ class Z2EquivariantRNN(nn.Module):
         W_odd_full = self.W_odd.weight
 
         # Place even block
-        W_comm[:self.even_dim, :self.input_dim] = W_even_full[:, :self.input_dim]
-        W_comm[:self.even_dim, self.input_dim:self.input_dim + self.even_dim] = W_even_full[:, self.input_dim:]
+        W_comm[: self.even_dim, : self.input_dim] = W_even_full[:, : self.input_dim]
+        W_comm[: self.even_dim, self.input_dim : self.input_dim + self.even_dim] = W_even_full[
+            :, self.input_dim :
+        ]
 
         # Place odd block
-        W_comm[self.even_dim:, :self.input_dim] = W_odd_full[:, :self.input_dim]
-        W_comm[self.even_dim:, self.input_dim + self.even_dim:] = W_odd_full[:, self.input_dim:]
+        W_comm[self.even_dim :, : self.input_dim] = W_odd_full[:, : self.input_dim]
+        W_comm[self.even_dim :, self.input_dim + self.even_dim :] = W_odd_full[:, self.input_dim :]
 
         return W_comm, torch.zeros_like(W_comm)  # No flip weights
 
@@ -158,11 +174,11 @@ class SeamGatedRNN(nn.Module):
         input_dim: int,
         hidden_dim: int,
         output_dim: int,
-        gate_type: str = 'learned',  # 'fixed', 'learned', 'kstar'
+        gate_type: str = "learned",  # 'fixed', 'learned', 'kstar'
         fixed_gate_value: float = 0.5,
         kstar: float = 0.721,
         tau: float = 0.1,
-        even_dim: Optional[int] = None
+        even_dim: Optional[int] = None,
     ):
         super().__init__()
 
@@ -201,21 +217,20 @@ class SeamGatedRNN(nn.Module):
         self.bias = nn.Parameter(torch.zeros(hidden_dim))
 
         # Gate network (if learned)
-        if gate_type == 'learned':
+        if gate_type == "learned":
             self.gate_mlp = nn.Sequential(
-                nn.Linear(hidden_dim, 32),
-                nn.ReLU(),
-                nn.Linear(32, 1),
-                nn.Sigmoid()
+                nn.Linear(hidden_dim, 32), nn.ReLU(), nn.Linear(32, 1), nn.Sigmoid()
             )
 
         # Output layer
         self.output_layer = nn.Linear(hidden_dim, output_dim)
 
         # Move parity structures to correct device
-        self.register_buffer('S', self.parity_op.S)
+        self.register_buffer("S", self.parity_op.S)
 
-    def forward(self, x: torch.Tensor, h: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(
+        self, x: torch.Tensor, h: Optional[torch.Tensor] = None
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Args:
             x: (batch, seq_len, input_dim) or (batch, input_dim)
@@ -257,12 +272,23 @@ class SeamGatedRNN(nn.Module):
 
     def step(self, x: torch.Tensor, h: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Single RNN step with seam gate"""
+        # Track if either input is unbatched (1D) - if so, return unbatched output
+        x_was_1d = x.dim() == 1
+        h_was_1d = h.dim() == 1
+        return_1d = x_was_1d or h_was_1d
+
+        # Ensure both inputs have batch dimension for consistent processing
+        if x_was_1d:
+            x = x.unsqueeze(0)
+        if h_was_1d:
+            h = h.unsqueeze(0)
+
         # Compute gate
         g = self.compute_gate(h)
 
         # Extract even and odd components directly
-        h_even = h[..., :self.even_dim]
-        h_odd = h[..., self.even_dim:]
+        h_even = h[..., : self.even_dim]
+        h_odd = h[..., self.even_dim :]
 
         # Concatenate input
         u_even = torch.cat([x, h_even], dim=-1)
@@ -275,8 +301,8 @@ class SeamGatedRNN(nn.Module):
         # Anticommutant contribution (parity-swapping) with S applied
         # Apply S to h and extract components
         h_flipped = h @ self.S.T
-        h_flipped_even = h_flipped[..., :self.even_dim]
-        h_flipped_odd = h_flipped[..., self.even_dim:]
+        h_flipped_even = h_flipped[..., : self.even_dim]
+        h_flipped_odd = h_flipped[..., self.even_dim :]
 
         u_even_flipped = torch.cat([x, h_flipped_even], dim=-1)
         u_odd_flipped = torch.cat([x, h_flipped_odd], dim=-1)
@@ -291,17 +317,22 @@ class SeamGatedRNN(nn.Module):
         h_next = torch.cat([h_even_next, h_odd_next], dim=-1) + self.bias
         h_next = torch.tanh(h_next)
 
+        # Restore original dimensionality - squeeze if either input was 1D
+        if return_1d and h_next.size(0) == 1:
+            h_next = h_next.squeeze(0)
+            g = g.squeeze(0)
+
         return h_next, g
 
     def compute_gate(self, h: torch.Tensor) -> torch.Tensor:
         """Compute seam gate value g(h) ∈ [0, 1]"""
-        if self.gate_type == 'fixed':
+        if self.gate_type == "fixed":
             return h.new_full((h.shape[0],), self.fixed_gate_value)
 
-        elif self.gate_type == 'learned':
+        elif self.gate_type == "learned":
             return self.gate_mlp(h).squeeze(-1)
 
-        elif self.gate_type == 'kstar':
+        elif self.gate_type == "kstar":
             alpha_minus = self.projectors.parity_energy(h)
             gate = torch.sigmoid((alpha_minus - self.kstar) / self.tau)
             return gate
@@ -312,8 +343,8 @@ class SeamGatedRNN(nn.Module):
     def _apply_parity_to_concat(self, u: torch.Tensor) -> torch.Tensor:
         """Apply parity operator to concatenated [x, h]"""
         # Extract h part and apply S
-        h = u[:, self.input_dim:]
-        x = u[:, :self.input_dim]
+        h = u[:, self.input_dim :]
+        x = u[:, : self.input_dim]
 
         h_flipped = h @ self.S.T
         return torch.cat([x, h_flipped], dim=-1)

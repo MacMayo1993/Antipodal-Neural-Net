@@ -6,9 +6,9 @@ neural networks: the parity operator S, projectors P₊/P₋, and utilities for
 verifying commutation/anticommutation properties.
 """
 
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 
 
 class ParityOperator(nn.Module):
@@ -45,8 +45,7 @@ class ParityOperator(nn.Module):
         else:
             # Custom split must be valid
             assert 0 < even_dim < dim, (
-                f"even_dim must satisfy 0 < even_dim < dim. "
-                f"Got even_dim={even_dim}, dim={dim}."
+                f"even_dim must satisfy 0 < even_dim < dim. " f"Got even_dim={even_dim}, dim={dim}."
             )
             self.even_dim = even_dim
 
@@ -54,11 +53,8 @@ class ParityOperator(nn.Module):
         assert self.odd_dim > 0, f"odd_dim must be positive. Got odd_dim={self.odd_dim}"
 
         # Construct S = diag(+1, ..., +1, -1, ..., -1) and register as buffer
-        S = torch.diag(torch.cat([
-            torch.ones(self.even_dim),
-            -torch.ones(self.odd_dim)
-        ]))
-        self.register_buffer('S', S)
+        S = torch.diag(torch.cat([torch.ones(self.even_dim), -torch.ones(self.odd_dim)]))
+        self.register_buffer("S", S)
 
     def __call__(self, h):
         """Apply parity operator: S @ h"""
@@ -86,9 +82,9 @@ class ParityProjectors(nn.Module):
         """
         super().__init__()
 
-        assert isinstance(parity_op, ParityOperator), (
-            f"parity_op must be a ParityOperator instance. Got {type(parity_op)}"
-        )
+        assert isinstance(
+            parity_op, ParityOperator
+        ), f"parity_op must be a ParityOperator instance. Got {type(parity_op)}"
         self.dim = parity_op.dim
 
         # Verify even/odd dimensions are positive
@@ -100,9 +96,9 @@ class ParityProjectors(nn.Module):
         P_plus = 0.5 * (I + parity_op.S)
         P_minus = 0.5 * (I - parity_op.S)
 
-        self.register_buffer('S', parity_op.S)
-        self.register_buffer('P_plus', P_plus)
-        self.register_buffer('P_minus', P_minus)
+        self.register_buffer("S", parity_op.S)
+        self.register_buffer("P_plus", P_plus)
+        self.register_buffer("P_minus", P_minus)
 
     def project_plus(self, h):
         """Project onto even subspace: P₊ @ h"""
@@ -123,14 +119,12 @@ class ParityProjectors(nn.Module):
             h = h.unsqueeze(0)
 
         h_minus = self.project_minus(h)
-        norm_h_sq = (h ** 2).sum(dim=-1)
-        norm_h_minus_sq = (h_minus ** 2).sum(dim=-1)
+        norm_h_sq = (h**2).sum(dim=-1)
+        norm_h_minus_sq = (h_minus**2).sum(dim=-1)
 
         # Avoid division by zero - use h.new_zeros for device consistency
         alpha_minus = torch.where(
-            norm_h_sq > 1e-8,
-            norm_h_minus_sq / norm_h_sq,
-            h.new_zeros(norm_h_sq.shape)
+            norm_h_sq > 1e-8, norm_h_minus_sq / norm_h_sq, h.new_zeros(norm_h_sq.shape)
         )
 
         return alpha_minus
@@ -150,8 +144,9 @@ def verify_eigenvalues(S: torch.Tensor, tol: float = 1e-6) -> bool:
     return valid.item()
 
 
-def verify_projector_properties(P_plus: torch.Tensor, P_minus: torch.Tensor,
-                                 tol: float = 1e-6) -> dict:
+def verify_projector_properties(
+    P_plus: torch.Tensor, P_minus: torch.Tensor, tol: float = 1e-6
+) -> dict:
     """
     Verify all projector properties.
 
@@ -162,10 +157,10 @@ def verify_projector_properties(P_plus: torch.Tensor, P_minus: torch.Tensor,
     zero = torch.zeros_like(P_plus)
 
     checks = {
-        'idempotent_plus': torch.allclose(P_plus @ P_plus, P_plus, atol=tol),
-        'idempotent_minus': torch.allclose(P_minus @ P_minus, P_minus, atol=tol),
-        'orthogonal': torch.allclose(P_plus @ P_minus, zero, atol=tol),
-        'partition': torch.allclose(P_plus + P_minus, I, atol=tol)
+        "idempotent_plus": torch.allclose(P_plus @ P_plus, P_plus, atol=tol),
+        "idempotent_minus": torch.allclose(P_minus @ P_minus, P_minus, atol=tol),
+        "orthogonal": torch.allclose(P_plus @ P_minus, zero, atol=tol),
+        "partition": torch.allclose(P_plus + P_minus, I, atol=tol),
     }
 
     return checks
@@ -181,8 +176,9 @@ def verify_anticommutation(W: torch.Tensor, S: torch.Tensor, tol: float = 1e-6) 
     return torch.allclose(W @ S, -S @ W, atol=tol)
 
 
-def construct_commutant_weight(A_plus: torch.Tensor, A_minus: torch.Tensor,
-                                 parity_op: ParityOperator) -> torch.Tensor:
+def construct_commutant_weight(
+    A_plus: torch.Tensor, A_minus: torch.Tensor, parity_op: ParityOperator
+) -> torch.Tensor:
     """
     Construct weight matrix that commutes with S.
 
@@ -199,14 +195,14 @@ def construct_commutant_weight(A_plus: torch.Tensor, A_minus: torch.Tensor,
         Block-diagonal weight matrix
     """
     W = torch.zeros(parity_op.dim, parity_op.dim)
-    W[:parity_op.even_dim, :parity_op.even_dim] = A_plus
-    W[parity_op.even_dim:, parity_op.even_dim:] = A_minus
+    W[: parity_op.even_dim, : parity_op.even_dim] = A_plus
+    W[parity_op.even_dim :, parity_op.even_dim :] = A_minus
     return W
 
 
-def construct_anticommutant_weight(B_plus_minus: torch.Tensor,
-                                     B_minus_plus: torch.Tensor,
-                                     parity_op: ParityOperator) -> torch.Tensor:
+def construct_anticommutant_weight(
+    B_plus_minus: torch.Tensor, B_minus_plus: torch.Tensor, parity_op: ParityOperator
+) -> torch.Tensor:
     """
     Construct weight matrix that anticommutes with S.
 
@@ -223,6 +219,6 @@ def construct_anticommutant_weight(B_plus_minus: torch.Tensor,
         Off-block-diagonal weight matrix
     """
     W = torch.zeros(parity_op.dim, parity_op.dim)
-    W[:parity_op.even_dim, parity_op.even_dim:] = B_plus_minus
-    W[parity_op.even_dim:, :parity_op.even_dim] = B_minus_plus
+    W[: parity_op.even_dim, parity_op.even_dim :] = B_plus_minus
+    W[parity_op.even_dim :, : parity_op.even_dim] = B_minus_plus
     return W

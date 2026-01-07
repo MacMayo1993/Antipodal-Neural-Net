@@ -4,14 +4,14 @@ Section 11: Regression Tests
 Tests for numerical stability and absence of NaN/Inf values.
 """
 
+import numpy as np
 import pytest
 import torch
 import torch.optim as optim
-import numpy as np
 
-from src.models import Z2EquivariantRNN, SeamGatedRNN, GRUBaseline
 from src.data import AntipodalRegimeSwitcher
 from src.losses import quotient_loss, rank1_projector_loss
+from src.models import GRUBaseline, SeamGatedRNN, Z2EquivariantRNN
 
 
 class TestNumericalStability:
@@ -25,17 +25,15 @@ class TestNumericalStability:
         - Gate values
         """
         # Generate data
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=8, obs_dim=4, p_switch=0.05, seed=42
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=8, obs_dim=4, p_switch=0.05, seed=42)
         obs, _, _ = generator.generate_sequence(T=200)
 
         # Test all model types
         models = [
             Z2EquivariantRNN(4, 12, 4),
-            SeamGatedRNN(4, 12, 4, gate_type='kstar'),
-            SeamGatedRNN(4, 12, 4, gate_type='learned'),
-            GRUBaseline(4, 12, 4)
+            SeamGatedRNN(4, 12, 4, gate_type="kstar"),
+            SeamGatedRNN(4, 12, 4, gate_type="learned"),
+            GRUBaseline(4, 12, 4),
         ]
 
         for model in models:
@@ -46,9 +44,9 @@ class TestNumericalStability:
 
             # Training loop
             for step in range(20):
-                if hasattr(model, 'gru'):
+                if hasattr(model, "gru"):
                     y_pred, h, gates = model(X)
-                elif hasattr(model, 'gate_type'):
+                elif hasattr(model, "gate_type"):
                     y_pred, h, gates = model(X)
                 else:
                     y_pred, h = model(X)
@@ -57,18 +55,22 @@ class TestNumericalStability:
                 loss = torch.nn.functional.mse_loss(y_pred, Y)
 
                 # Check for NaN/Inf
-                assert torch.isfinite(loss).all(), \
-                    f"{model.__class__.__name__}: Non-finite loss at step {step}"
+                assert torch.isfinite(
+                    loss
+                ).all(), f"{model.__class__.__name__}: Non-finite loss at step {step}"
 
-                assert torch.isfinite(y_pred).all(), \
-                    f"{model.__class__.__name__}: Non-finite predictions at step {step}"
+                assert torch.isfinite(
+                    y_pred
+                ).all(), f"{model.__class__.__name__}: Non-finite predictions at step {step}"
 
-                assert torch.isfinite(h).all(), \
-                    f"{model.__class__.__name__}: Non-finite hidden states at step {step}"
+                assert torch.isfinite(
+                    h
+                ).all(), f"{model.__class__.__name__}: Non-finite hidden states at step {step}"
 
                 if gates.numel() > 1:
-                    assert torch.isfinite(gates).all(), \
-                        f"{model.__class__.__name__}: Non-finite gates at step {step}"
+                    assert torch.isfinite(
+                        gates
+                    ).all(), f"{model.__class__.__name__}: Non-finite gates at step {step}"
 
                 optimizer.zero_grad()
                 loss.backward()
@@ -76,14 +78,15 @@ class TestNumericalStability:
                 # Check gradients
                 for name, param in model.named_parameters():
                     if param.grad is not None:
-                        assert torch.isfinite(param.grad).all(), \
-                            f"{model.__class__.__name__}: Non-finite gradient in {name} at step {step}"
+                        assert torch.isfinite(
+                            param.grad
+                        ).all(), f"{model.__class__.__name__}: Non-finite gradient in {name} at step {step}"
 
                 optimizer.step()
 
     def test_extreme_input_handling(self):
         """Test models handle extreme input values gracefully"""
-        model = SeamGatedRNN(4, 12, 4, gate_type='kstar')
+        model = SeamGatedRNN(4, 12, 4, gate_type="kstar")
 
         # Very large inputs
         x_large = torch.ones(1, 10, 4) * 100
@@ -104,7 +107,7 @@ class TestNumericalStability:
 
     def test_zero_input_handling(self):
         """Test models handle zero inputs"""
-        model = SeamGatedRNN(4, 12, 4, gate_type='learned')
+        model = SeamGatedRNN(4, 12, 4, gate_type="learned")
 
         x_zero = torch.zeros(1, 10, 4)
 
@@ -158,7 +161,7 @@ class TestGradientStability:
 
     def test_gradient_norm_bounded(self):
         """Verify gradients don't explode during training"""
-        model = SeamGatedRNN(4, 12, 4, gate_type='kstar')
+        model = SeamGatedRNN(4, 12, 4, gate_type="kstar")
         optimizer = optim.Adam(model.parameters(), lr=0.01)
 
         # Generate data
@@ -179,10 +182,9 @@ class TestGradientStability:
                     param_norm = param.grad.data.norm(2)
                     total_norm += param_norm.item() ** 2
 
-            total_norm = total_norm ** 0.5
+            total_norm = total_norm**0.5
 
-            assert total_norm < 1000, \
-                f"Gradient explosion at step {step}: norm={total_norm}"
+            assert total_norm < 1000, f"Gradient explosion at step {step}: norm={total_norm}"
 
             optimizer.step()
 
@@ -192,7 +194,7 @@ class TestEdgeCases:
 
     def test_single_timestep(self):
         """Test models work with single timestep input"""
-        model = SeamGatedRNN(4, 12, 4, gate_type='kstar')
+        model = SeamGatedRNN(4, 12, 4, gate_type="kstar")
 
         x = torch.randn(1, 4)  # Single timestep
 
@@ -216,7 +218,7 @@ class TestEdgeCases:
 
     def test_various_sequence_lengths(self):
         """Test models work with various sequence lengths"""
-        model = SeamGatedRNN(4, 12, 4, gate_type='learned')
+        model = SeamGatedRNN(4, 12, 4, gate_type="learned")
 
         for seq_len in [1, 5, 10, 50, 100]:
             x = torch.randn(2, seq_len, 4)
@@ -224,10 +226,8 @@ class TestEdgeCases:
             with torch.no_grad():
                 y, h, g = model(x)
 
-            assert y.shape == (2, seq_len, 4), \
-                f"Incorrect shape for seq_len={seq_len}"
-            assert torch.isfinite(y).all(), \
-                f"Non-finite output for seq_len={seq_len}"
+            assert y.shape == (2, seq_len, 4), f"Incorrect shape for seq_len={seq_len}"
+            assert torch.isfinite(y).all(), f"Non-finite output for seq_len={seq_len}"
 
 
 if __name__ == "__main__":
