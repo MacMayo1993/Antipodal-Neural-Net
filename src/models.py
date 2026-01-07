@@ -38,7 +38,14 @@ class Z2EquivariantRNN(nn.Module):
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
 
-        # Parity structure
+        # Validate dimensions for parity splitting
+        if even_dim is None and hidden_dim % 2 != 0:
+            raise ValueError(
+                f"Z2EquivariantRNN requires even hidden_dim when even_dim is not provided. "
+                f"Got hidden_dim={hidden_dim}. Either use even hidden_dim or provide even_dim explicitly."
+            )
+
+        # Parity structure (will validate dimensions internally)
         self.parity_op = ParityOperator(hidden_dim, even_dim)
         self.projectors = ParityProjectors(self.parity_op)
 
@@ -76,7 +83,7 @@ class Z2EquivariantRNN(nn.Module):
         batch_size, seq_len, _ = x.shape
 
         if h is None:
-            h = torch.zeros(batch_size, self.hidden_dim, device=x.device)
+            h = x.new_zeros(batch_size, self.hidden_dim)
 
         outputs = []
 
@@ -167,7 +174,14 @@ class SeamGatedRNN(nn.Module):
         self.kstar = kstar
         self.tau = tau
 
-        # Parity structure
+        # Validate dimensions for parity splitting
+        if even_dim is None and hidden_dim % 2 != 0:
+            raise ValueError(
+                f"SeamGatedRNN requires even hidden_dim when even_dim is not provided. "
+                f"Got hidden_dim={hidden_dim}. Either use even hidden_dim or provide even_dim explicitly."
+            )
+
+        # Parity structure (will validate dimensions internally)
         self.parity_op = ParityOperator(hidden_dim, even_dim)
         self.projectors = ParityProjectors(self.parity_op)
 
@@ -221,7 +235,7 @@ class SeamGatedRNN(nn.Module):
         batch_size, seq_len, _ = x.shape
 
         if h is None:
-            h = torch.zeros(batch_size, self.hidden_dim, device=x.device)
+            h = x.new_zeros(batch_size, self.hidden_dim)
 
         outputs = []
         gates = []
@@ -282,7 +296,7 @@ class SeamGatedRNN(nn.Module):
     def compute_gate(self, h: torch.Tensor) -> torch.Tensor:
         """Compute seam gate value g(h) ∈ [0, 1]"""
         if self.gate_type == 'fixed':
-            return torch.full((h.shape[0],), self.fixed_gate_value, device=h.device)
+            return h.new_full((h.shape[0],), self.fixed_gate_value)
 
         elif self.gate_type == 'learned':
             return self.gate_mlp(h).squeeze(-1)
@@ -345,6 +359,6 @@ class GRUBaseline(nn.Module):
         h_final = h_final.squeeze(0)
 
         # Return dummy gates for compatibility
-        gates = torch.zeros(outputs.shape[0], outputs.shape[1] if outputs.dim() > 2 else 1, device=x.device)
+        gates = x.new_zeros(outputs.shape[0], outputs.shape[1] if outputs.dim() > 2 else 1)
 
         return outputs, h_final, gates
