@@ -12,21 +12,22 @@ Generates artifacts/metrics.csv with columns:
 - p_switch_test
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import argparse
-import torch
-import torch.optim as optim
-import numpy as np
 import csv
 from pathlib import Path
 
-from src.models import Z2EquivariantRNN, SeamGatedRNN, GRUBaseline
-from src.data import AntipodalRegimeSwitcher, find_regime_switches
+import numpy as np
+import torch
+import torch.optim as optim
+
 from src.baselines import AR1Model, IMMFilter
+from src.data import AntipodalRegimeSwitcher, find_regime_switches
+from src.models import GRUBaseline, SeamGatedRNN, Z2EquivariantRNN
 
 
 def count_parameters(model):

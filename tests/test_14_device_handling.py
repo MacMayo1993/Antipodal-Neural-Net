@@ -8,8 +8,8 @@ and that all tensors stay on the same device throughout operations.
 import pytest
 import torch
 
+from src.models import GRUBaseline, SeamGatedRNN, Z2EquivariantRNN
 from src.parity import ParityOperator, ParityProjectors
-from src.models import Z2EquivariantRNN, SeamGatedRNN, GRUBaseline
 
 
 class TestCPUDevice:

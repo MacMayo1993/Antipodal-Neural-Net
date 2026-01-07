@@ -7,11 +7,12 @@ Implements:
 - Standard baselines (GRU)
 """
 
+from typing import Optional, Tuple
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from typing import Optional, Tuple
 
 from .parity import ParityOperator, ParityProjectors
 

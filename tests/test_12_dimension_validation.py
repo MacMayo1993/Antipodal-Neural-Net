@@ -8,8 +8,8 @@ and that valid dimensions (even or with explicit even_dim) work correctly.
 import pytest
 import torch
 
+from src.models import SeamGatedRNN, Z2EquivariantRNN
 from src.parity import ParityOperator, ParityProjectors
-from src.models import Z2EquivariantRNN, SeamGatedRNN
 
 
 class TestParityOperatorDimensions:

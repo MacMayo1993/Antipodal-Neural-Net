@@ -7,16 +7,16 @@ This script demonstrates how to:
 3. Analyze seam gate activations during regime transitions
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-import torch
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
 
-from src import AntipodalRegimeSwitcher, SeamGatedRNN, GRUBaseline, find_regime_switches
+from src import AntipodalRegimeSwitcher, GRUBaseline, SeamGatedRNN, find_regime_switches
 
 
 def load_model(checkpoint_path):

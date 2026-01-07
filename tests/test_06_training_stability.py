@@ -8,9 +8,9 @@ import pytest
 import torch
 import torch.optim as optim
 
-from src.models import Z2EquivariantRNN, SeamGatedRNN
-from src.parity import verify_commutation, verify_anticommutation, ParityOperator
 from src.losses import quotient_loss
+from src.models import SeamGatedRNN, Z2EquivariantRNN
+from src.parity import ParityOperator, verify_anticommutation, verify_commutation
 
 
 class TestGradientFlow:

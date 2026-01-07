@@ -4,13 +4,12 @@ Section 10: Reproducibility Tests
 Tests for deterministic behavior across seeds and runs.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
-from src.models import SeamGatedRNN, Z2EquivariantRNN
 from src.data import AntipodalRegimeSwitcher
-
+from src.models import SeamGatedRNN, Z2EquivariantRNN
 
 TEST_SEEDS = [42, 123, 456, 789, 1011]
 

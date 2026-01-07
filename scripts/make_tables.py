@@ -7,14 +7,15 @@ Reads artifacts/metrics.csv and generates:
 - artifacts/table_generalization.tex
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-import pandas as pd
-import numpy as np
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 
 def format_mean_std(values):

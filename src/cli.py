@@ -3,12 +3,13 @@ Command-line interface for Antipodal Neural Networks
 """
 
 import argparse
-import torch
-import numpy as np
 from pathlib import Path
 
-from .models import Z2EquivariantRNN, SeamGatedRNN, GRUBaseline
+import numpy as np
+import torch
+
 from .data import AntipodalRegimeSwitcher
+from .models import GRUBaseline, SeamGatedRNN, Z2EquivariantRNN
 
 
 def main():

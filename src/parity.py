@@ -6,9 +6,9 @@ neural networks: the parity operator S, projectors P₊/P₋, and utilities for
 verifying commutation/anticommutation properties.
 """
 
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 
 
 class ParityOperator(nn.Module):

@@ -4,12 +4,11 @@ Section 1: Data Generator Tests
 Tests for the antipodal regime switching data generator.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from src.data import AntipodalRegimeSwitcher, find_regime_switches
-
 
 # Test seeds for reproducibility
 TEST_SEEDS = [42, 123, 456, 789, 1011]

@@ -6,9 +6,10 @@ Implements:
 - Interacting Multiple Model (IMM) filter for regime switching
 """
 
-import torch
+from typing import Optional, Tuple
+
 import numpy as np
-from typing import Tuple, Optional
+import torch
 
 
 class AR1Model:

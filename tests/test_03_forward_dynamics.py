@@ -4,11 +4,11 @@ Section 3: Forward Dynamics Tests
 Tests for equivariant forward passes and seam coupling effects.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
-from src.models import Z2EquivariantRNN, SeamGatedRNN
+from src.models import SeamGatedRNN, Z2EquivariantRNN
 from src.parity import ParityOperator, ParityProjectors
 
 

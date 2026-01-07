@@ -4,9 +4,9 @@ Section 4: Gate Logic Tests
 Tests for seam gate computation and k* threshold behavior.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from src.models import SeamGatedRNN
 from src.parity import ParityOperator, ParityProjectors

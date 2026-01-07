@@ -4,9 +4,9 @@ Section 5: Loss Function Tests
 Tests for quotient loss and rank-1 projector loss.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from src.losses import (
     quotient_loss,

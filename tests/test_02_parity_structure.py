@@ -4,20 +4,20 @@ Section 2: ℤ₂ Structural Invariance Tests
 Tests for parity operators, projectors, and symmetry properties.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from src.parity import (
     ParityOperator,
     ParityProjectors,
-    verify_involution,
-    verify_eigenvalues,
-    verify_projector_properties,
-    verify_commutation,
-    verify_anticommutation,
-    construct_commutant_weight,
     construct_anticommutant_weight,
+    construct_commutant_weight,
+    verify_anticommutation,
+    verify_commutation,
+    verify_eigenvalues,
+    verify_involution,
+    verify_projector_properties,
 )
 
 

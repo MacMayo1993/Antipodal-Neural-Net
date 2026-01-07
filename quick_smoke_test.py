@@ -3,12 +3,13 @@ Quick smoke test to verify core implementation before full benchmark.
 Tests basic functionality of all models on small data.
 """
 
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.getcwd())
 
-import torch
 import numpy as np
+import torch
 
 print("=" * 60)
 print("QUICK SMOKE TEST")
@@ -17,11 +18,11 @@ print("=" * 60)
 # Test 1: Import all modules
 print("\n[1/6] Testing imports...")
 try:
-    from src.parity import ParityOperator, ParityProjectors
-    from src.data import AntipodalRegimeSwitcher
-    from src.models import Z2EquivariantRNN, SeamGatedRNN, GRUBaseline
-    from src.losses import quotient_loss
     from src.baselines import AR1Model, IMMFilter
+    from src.data import AntipodalRegimeSwitcher
+    from src.losses import quotient_loss
+    from src.models import GRUBaseline, SeamGatedRNN, Z2EquivariantRNN
+    from src.parity import ParityOperator, ParityProjectors
     print("  ✓ All imports successful")
 except Exception as e:
     print(f"  ✗ Import failed: {e}")

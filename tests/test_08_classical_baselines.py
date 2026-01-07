@@ -4,9 +4,9 @@ Section 8: Classical Baseline Tests
 Tests for AR(1) and IMM filter baselines.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from src.baselines import AR1Model, IMMFilter, compute_transition_error_spike
 from src.data import AntipodalRegimeSwitcher

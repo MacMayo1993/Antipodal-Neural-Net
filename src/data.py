@@ -7,9 +7,10 @@ Generates time series with:
 - Markovian regime switching
 """
 
-import torch
+from typing import Optional, Tuple
+
 import numpy as np
-from typing import Tuple, Optional
+import torch
 
 from .seed import set_seed as _set_seed
 

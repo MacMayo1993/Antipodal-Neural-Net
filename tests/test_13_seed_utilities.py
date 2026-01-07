@@ -5,13 +5,14 @@ Tests that the unified seed utilities ensure reproducibility across
 CPU/GPU and different random operations.
 """
 
-import pytest
-import torch
-import numpy as np
 import random
 
-from src.seed import set_seed, create_generator, get_rng_state, set_rng_state
+import numpy as np
+import pytest
+import torch
+
 from src.data import AntipodalRegimeSwitcher
+from src.seed import create_generator, get_rng_state, set_rng_state, set_seed
 
 
 class TestSetSeed:

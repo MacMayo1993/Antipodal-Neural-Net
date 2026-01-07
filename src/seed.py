@@ -5,9 +5,10 @@ Ensures deterministic behavior for PyTorch, NumPy, and Python's random module.
 """
 
 import random
+from typing import Optional
+
 import numpy as np
 import torch
-from typing import Optional
 
 
 def set_seed(seed: int, deterministic: bool = True) -> None:

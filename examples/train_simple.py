@@ -7,17 +7,17 @@ This script demonstrates basic usage:
 3. Evaluate and compare against a GRU baseline
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-import matplotlib.pyplot as plt
 
-from src import AntipodalRegimeSwitcher, SeamGatedRNN, GRUBaseline, find_regime_switches
+from src import AntipodalRegimeSwitcher, GRUBaseline, SeamGatedRNN, find_regime_switches
 
 
 def main():

@@ -4,13 +4,13 @@ Section 9: Visualization Consistency Tests
 Tests for gate-switch alignment and phase transition behavior.
 """
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
-from src.models import SeamGatedRNN
 from src.data import AntipodalRegimeSwitcher, find_regime_switches
-from src.parity import ParityProjectors, ParityOperator
+from src.models import SeamGatedRNN
+from src.parity import ParityOperator, ParityProjectors
 
 
 class TestGateSwitchAlignment:

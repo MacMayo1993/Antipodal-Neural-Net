@@ -7,20 +7,20 @@ Generates:
 - fig3_alpha_phase_transition.png: α₋ phase transition around switches
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-import torch
-import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
 
-from src.models import Z2EquivariantRNN, SeamGatedRNN, GRUBaseline
-from src.data import AntipodalRegimeSwitcher, find_regime_switches
-from src.parity import ParityProjectors
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
 
+from src.data import AntipodalRegimeSwitcher, find_regime_switches
+from src.models import GRUBaseline, SeamGatedRNN, Z2EquivariantRNN
+from src.parity import ParityProjectors
 
 # Publication styling
 plt.rcParams.update(

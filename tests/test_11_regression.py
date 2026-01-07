@@ -4,14 +4,14 @@ Section 11: Regression Tests
 Tests for numerical stability and absence of NaN/Inf values.
 """
 
+import numpy as np
 import pytest
 import torch
 import torch.optim as optim
-import numpy as np
 
-from src.models import Z2EquivariantRNN, SeamGatedRNN, GRUBaseline
 from src.data import AntipodalRegimeSwitcher
 from src.losses import quotient_loss, rank1_projector_loss
+from src.models import GRUBaseline, SeamGatedRNN, Z2EquivariantRNN
 
 
 class TestNumericalStability:
