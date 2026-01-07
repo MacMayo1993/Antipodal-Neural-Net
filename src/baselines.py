@@ -31,7 +31,7 @@ class AR1Model:
             observations: (T, obs_dim) time series
         """
         X = observations[:-1]  # x_t
-        Y = observations[1:]   # x_{t+1}
+        Y = observations[1:]  # x_{t+1}
 
         # Least squares: B = (XᵀX)⁻¹XᵀY
         XtX = X.T @ X
@@ -128,10 +128,7 @@ class IMMFilter:
         self.mode_probs = np.array([0.5, 0.5])
 
         # Transition matrix
-        self.transition_matrix = np.array([
-            [1 - p_switch, p_switch],
-            [p_switch, 1 - p_switch]
-        ])
+        self.transition_matrix = np.array([[1 - p_switch, p_switch], [p_switch, 1 - p_switch]])
 
     def fit(self, observations: torch.Tensor, regimes: Optional[torch.Tensor] = None):
         """
@@ -225,9 +222,7 @@ class IMMFilter:
 
 
 def compute_transition_error_spike(
-    errors: torch.Tensor,
-    regimes: torch.Tensor,
-    window: int = 5
+    errors: torch.Tensor, regimes: torch.Tensor, window: int = 5
 ) -> Tuple[float, float]:
     """
     Measure error spike around regime transitions.
@@ -242,7 +237,7 @@ def compute_transition_error_spike(
         mean_stable_error: Mean error outside transitions
     """
     # Find transitions
-    switches = (regimes[1:] != regimes[:-1])
+    switches = regimes[1:] != regimes[:-1]
     switch_indices = torch.where(switches)[0] + 1
 
     # Mark transition windows

@@ -89,7 +89,7 @@ class TestModelDimensions:
 
     def test_seam_gated_even_hidden_dim(self):
         """SeamGatedRNN should work with even hidden_dim"""
-        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type='fixed')
+        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type="fixed")
         assert model.hidden_dim == 8
         assert model.even_dim == 4
         assert model.odd_dim == 4
@@ -97,13 +97,12 @@ class TestModelDimensions:
     def test_seam_gated_odd_hidden_dim_fails(self):
         """SeamGatedRNN should fail with odd hidden_dim"""
         with pytest.raises(ValueError, match="requires even hidden_dim"):
-            SeamGatedRNN(input_dim=4, hidden_dim=7, output_dim=4, gate_type='fixed')
+            SeamGatedRNN(input_dim=4, hidden_dim=7, output_dim=4, gate_type="fixed")
 
     def test_seam_gated_explicit_even_dim(self):
         """SeamGatedRNN should work with explicit even_dim"""
         model = SeamGatedRNN(
-            input_dim=4, hidden_dim=10, output_dim=4,
-            even_dim=3, gate_type='fixed'
+            input_dim=4, hidden_dim=10, output_dim=4, even_dim=3, gate_type="fixed"
         )
         assert model.hidden_dim == 10
         assert model.even_dim == 3

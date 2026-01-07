@@ -108,12 +108,12 @@ class TestCreateGenerator:
 
     def test_generator_device(self):
         """Generator should respect device parameter"""
-        gen_cpu = create_generator(42, device='cpu')
-        assert gen_cpu.device.type == 'cpu'
+        gen_cpu = create_generator(42, device="cpu")
+        assert gen_cpu.device.type == "cpu"
 
         if torch.cuda.is_available():
-            gen_cuda = create_generator(42, device='cuda')
-            assert gen_cuda.device.type == 'cuda'
+            gen_cuda = create_generator(42, device="cuda")
+            assert gen_cuda.device.type == "cuda"
 
 
 class TestRNGState:
@@ -200,10 +200,10 @@ class TestCrossDeviceReproducibility:
     def test_cpu_reproducibility(self):
         """Operations on CPU should be reproducible"""
         set_seed(42)
-        x1 = torch.randn(100, device='cpu')
+        x1 = torch.randn(100, device="cpu")
 
         set_seed(42)
-        x2 = torch.randn(100, device='cpu')
+        x2 = torch.randn(100, device="cpu")
 
         assert torch.equal(x1, x2), "CPU operations not reproducible"
 
@@ -211,10 +211,10 @@ class TestCrossDeviceReproducibility:
     def test_cuda_seed_set(self):
         """CUDA seeds should be set by set_seed"""
         set_seed(42)
-        x1 = torch.randn(100, device='cuda')
+        x1 = torch.randn(100, device="cuda")
 
         set_seed(42)
-        x2 = torch.randn(100, device='cuda')
+        x2 = torch.randn(100, device="cuda")
 
         assert torch.equal(x1, x2), "CUDA operations not reproducible"
 
@@ -241,8 +241,7 @@ class TestSequenceReproducibility:
         loss1.backward()
 
         # Get gradients
-        grad1 = [p.grad.clone() if p.grad is not None else None
-                 for p in model1.parameters()]
+        grad1 = [p.grad.clone() if p.grad is not None else None for p in model1.parameters()]
 
         # Second run
         set_seed(42)
@@ -253,8 +252,7 @@ class TestSequenceReproducibility:
         loss2.backward()
 
         # Get gradients
-        grad2 = [p.grad.clone() if p.grad is not None else None
-                 for p in model2.parameters()]
+        grad2 = [p.grad.clone() if p.grad is not None else None for p in model2.parameters()]
 
         # Check everything matches
         assert torch.equal(x1, x2), "Inputs not reproducible"

@@ -9,19 +9,15 @@ This script demonstrates basic usage:
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import torch
 import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src import (
-    AntipodalRegimeSwitcher,
-    SeamGatedRNN,
-    GRUBaseline,
-    find_regime_switches
-)
+from src import AntipodalRegimeSwitcher, SeamGatedRNN, GRUBaseline, find_regime_switches
 
 
 def main():
@@ -51,10 +47,7 @@ def main():
     print(f"  - Sequence length: {train_length}")
 
     generator = AntipodalRegimeSwitcher(
-        latent_dim=latent_dim,
-        obs_dim=obs_dim,
-        p_switch=p_switch,
-        seed=42
+        latent_dim=latent_dim, obs_dim=obs_dim, p_switch=p_switch, seed=42
     )
 
     train_obs, train_latents, train_regimes = generator.generate_sequence(T=train_length)
@@ -74,16 +67,12 @@ def main():
         input_dim=obs_dim,
         hidden_dim=hidden_dim,
         output_dim=obs_dim,
-        gate_type='kstar',  # Use k*-based seam gating
+        gate_type="kstar",  # Use k*-based seam gating
         kstar=0.721,
-        tau=0.1
+        tau=0.1,
     )
 
-    model_gru = GRUBaseline(
-        input_dim=obs_dim,
-        hidden_dim=hidden_dim,
-        output_dim=obs_dim
-    )
+    model_gru = GRUBaseline(input_dim=obs_dim, hidden_dim=hidden_dim, output_dim=obs_dim)
 
     print(f"  - ℤ₂ + k* model: {sum(p.numel() for p in model_z2.parameters())} parameters")
     print(f"  - GRU baseline: {sum(p.numel() for p in model_gru.parameters())} parameters")

@@ -22,11 +22,7 @@ class TestGradientFlow:
         after one training step
         """
         model = SeamGatedRNN(
-            input_dim=3,
-            hidden_dim=8,
-            output_dim=2,
-            gate_type='learned',
-            even_dim=4
+            input_dim=3, hidden_dim=8, output_dim=2, gate_type="learned", even_dim=4
         )
 
         optimizer = optim.Adam(model.parameters(), lr=0.01)
@@ -46,8 +42,7 @@ class TestGradientFlow:
         # Check gradients exist and are finite
         for name, param in model.named_parameters():
             if param.grad is not None:
-                assert torch.all(torch.isfinite(param.grad)), \
-                    f"Non-finite gradient in {name}"
+                assert torch.all(torch.isfinite(param.grad)), f"Non-finite gradient in {name}"
 
         # Note: Full symmetry preservation in gradients is complex
         # and depends on the optimizer. Here we just check gradients flow.
@@ -55,11 +50,7 @@ class TestGradientFlow:
     def test_gradient_flow_through_gate(self):
         """Verify gradients flow through seam gate"""
         model = SeamGatedRNN(
-            input_dim=3,
-            hidden_dim=8,
-            output_dim=2,
-            gate_type='learned',
-            even_dim=4
+            input_dim=3, hidden_dim=8, output_dim=2, gate_type="learned", even_dim=4
         )
 
         x = torch.randn(2, 5, 3)
@@ -89,11 +80,7 @@ class TestModeCollapse:
         Var(P₊h) > ε and Var(P₋h) > ε
         """
         model = SeamGatedRNN(
-            input_dim=3,
-            hidden_dim=8,
-            output_dim=2,
-            gate_type='learned',
-            even_dim=4
+            input_dim=3, hidden_dim=8, output_dim=2, gate_type="learned", even_dim=4
         )
 
         optimizer = optim.Adam(model.parameters(), lr=0.01)
@@ -128,13 +115,7 @@ class TestModeCollapse:
 
     def test_no_nan_during_training(self):
         """Verify no NaNs appear during short training"""
-        model = SeamGatedRNN(
-            input_dim=3,
-            hidden_dim=8,
-            output_dim=2,
-            gate_type='kstar',
-            even_dim=4
-        )
+        model = SeamGatedRNN(input_dim=3, hidden_dim=8, output_dim=2, gate_type="kstar", even_dim=4)
 
         optimizer = optim.Adam(model.parameters(), lr=0.01)
 
@@ -160,11 +141,7 @@ class TestOptimizationStability:
 
     def test_loss_decreases(self):
         """Verify loss decreases during training on simple task"""
-        model = Z2EquivariantRNN(
-            input_dim=3,
-            hidden_dim=16,
-            output_dim=2
-        )
+        model = Z2EquivariantRNN(input_dim=3, hidden_dim=16, output_dim=2)
 
         optimizer = optim.Adam(model.parameters(), lr=0.01)
 
@@ -185,8 +162,9 @@ class TestOptimizationStability:
             losses.append(loss.item())
 
         # Loss should decrease
-        assert losses[-1] < losses[0], \
-            f"Loss did not decrease: initial={losses[0]:.4f}, final={losses[-1]:.4f}"
+        assert (
+            losses[-1] < losses[0]
+        ), f"Loss did not decrease: initial={losses[0]:.4f}, final={losses[-1]:.4f}"
 
 
 if __name__ == "__main__":

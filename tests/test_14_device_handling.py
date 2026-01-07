@@ -18,26 +18,26 @@ class TestCPUDevice:
     def test_parity_operator_cpu(self):
         """ParityOperator should work on CPU"""
         parity_op = ParityOperator(dim=8)
-        assert parity_op.S.device.type == 'cpu'
+        assert parity_op.S.device.type == "cpu"
 
         h = torch.randn(8)
         h_transformed = parity_op(h)
-        assert h_transformed.device.type == 'cpu'
+        assert h_transformed.device.type == "cpu"
 
     def test_parity_projectors_cpu(self):
         """ParityProjectors should work on CPU"""
         parity_op = ParityOperator(dim=8)
         projectors = ParityProjectors(parity_op)
 
-        assert projectors.P_plus.device.type == 'cpu'
-        assert projectors.P_minus.device.type == 'cpu'
+        assert projectors.P_plus.device.type == "cpu"
+        assert projectors.P_minus.device.type == "cpu"
 
         h = torch.randn(8)
         h_plus = projectors.project_plus(h)
         h_minus = projectors.project_minus(h)
 
-        assert h_plus.device.type == 'cpu'
-        assert h_minus.device.type == 'cpu'
+        assert h_plus.device.type == "cpu"
+        assert h_minus.device.type == "cpu"
 
     def test_z2_equivariant_forward_cpu(self):
         """Z2EquivariantRNN forward pass should work on CPU"""
@@ -46,19 +46,19 @@ class TestCPUDevice:
 
         outputs, h = model(x)
 
-        assert outputs.device.type == 'cpu'
-        assert h.device.type == 'cpu'
+        assert outputs.device.type == "cpu"
+        assert h.device.type == "cpu"
 
     def test_seam_gated_forward_cpu(self):
         """SeamGatedRNN forward pass should work on CPU"""
-        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type='kstar')
+        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type="kstar")
         x = torch.randn(2, 10, 4)
 
         outputs, h, gates = model(x)
 
-        assert outputs.device.type == 'cpu'
-        assert h.device.type == 'cpu'
-        assert gates.device.type == 'cpu'
+        assert outputs.device.type == "cpu"
+        assert h.device.type == "cpu"
+        assert gates.device.type == "cpu"
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
@@ -70,11 +70,11 @@ class TestCUDADevice:
         parity_op = ParityOperator(dim=8)
         parity_op = parity_op.cuda()
 
-        assert parity_op.S.device.type == 'cuda'
+        assert parity_op.S.device.type == "cuda"
 
-        h = torch.randn(8, device='cuda')
+        h = torch.randn(8, device="cuda")
         h_transformed = parity_op(h)
-        assert h_transformed.device.type == 'cuda'
+        assert h_transformed.device.type == "cuda"
 
     def test_parity_projectors_cuda(self):
         """ParityProjectors should work on CUDA"""
@@ -82,40 +82,40 @@ class TestCUDADevice:
         projectors = ParityProjectors(parity_op)
         projectors = projectors.cuda()
 
-        assert projectors.P_plus.device.type == 'cuda'
-        assert projectors.P_minus.device.type == 'cuda'
+        assert projectors.P_plus.device.type == "cuda"
+        assert projectors.P_minus.device.type == "cuda"
 
-        h = torch.randn(8, device='cuda')
+        h = torch.randn(8, device="cuda")
         h_plus = projectors.project_plus(h)
         h_minus = projectors.project_minus(h)
 
-        assert h_plus.device.type == 'cuda'
-        assert h_minus.device.type == 'cuda'
+        assert h_plus.device.type == "cuda"
+        assert h_minus.device.type == "cuda"
 
     def test_z2_equivariant_forward_cuda(self):
         """Z2EquivariantRNN forward pass should work on CUDA"""
         model = Z2EquivariantRNN(input_dim=4, hidden_dim=8, output_dim=4)
         model = model.cuda()
 
-        x = torch.randn(2, 10, 4, device='cuda')
+        x = torch.randn(2, 10, 4, device="cuda")
 
         outputs, h = model(x)
 
-        assert outputs.device.type == 'cuda'
-        assert h.device.type == 'cuda'
+        assert outputs.device.type == "cuda"
+        assert h.device.type == "cuda"
 
     def test_seam_gated_forward_cuda(self):
         """SeamGatedRNN forward pass should work on CUDA"""
-        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type='kstar')
+        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type="kstar")
         model = model.cuda()
 
-        x = torch.randn(2, 10, 4, device='cuda')
+        x = torch.randn(2, 10, 4, device="cuda")
 
         outputs, h, gates = model(x)
 
-        assert outputs.device.type == 'cuda'
-        assert h.device.type == 'cuda'
-        assert gates.device.type == 'cuda'
+        assert outputs.device.type == "cuda"
+        assert h.device.type == "cuda"
+        assert gates.device.type == "cuda"
 
     def test_parity_energy_cuda(self):
         """Parity energy computation should work on CUDA"""
@@ -123,10 +123,10 @@ class TestCUDADevice:
         projectors = ParityProjectors(parity_op)
         projectors = projectors.cuda()
 
-        h = torch.randn(2, 8, device='cuda')
+        h = torch.randn(2, 8, device="cuda")
         alpha = projectors.parity_energy(h)
 
-        assert alpha.device.type == 'cuda'
+        assert alpha.device.type == "cuda"
         assert torch.all((alpha >= 0) & (alpha <= 1)), "Parity energy out of bounds"
 
 
@@ -138,11 +138,11 @@ class TestBuffersMovedWithModel:
         model = Z2EquivariantRNN(input_dim=4, hidden_dim=8, output_dim=4)
 
         # Check initial device
-        assert model.parity_op.S.device.type == 'cpu'
+        assert model.parity_op.S.device.type == "cpu"
 
         # Move to CPU explicitly (should be no-op but safe)
         model = model.cpu()
-        assert model.parity_op.S.device.type == 'cpu'
+        assert model.parity_op.S.device.type == "cpu"
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_parity_buffers_move_to_cuda(self):
@@ -153,20 +153,20 @@ class TestBuffersMovedWithModel:
         model = model.cuda()
 
         # Check buffers moved
-        assert model.parity_op.S.device.type == 'cuda'
-        assert model.projectors.P_plus.device.type == 'cuda'
-        assert model.projectors.P_minus.device.type == 'cuda'
+        assert model.parity_op.S.device.type == "cuda"
+        assert model.projectors.P_plus.device.type == "cuda"
+        assert model.projectors.P_minus.device.type == "cuda"
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_seam_gated_buffers_move_to_cuda(self):
         """SeamGatedRNN buffers should move to CUDA"""
-        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type='kstar')
+        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type="kstar")
 
         # Move to CUDA
         model = model.cuda()
 
         # Check S buffer (registered in forward)
-        assert model.S.device.type == 'cuda'
+        assert model.S.device.type == "cuda"
 
 
 class TestMixedDeviceErrors:
@@ -176,7 +176,7 @@ class TestMixedDeviceErrors:
     def test_cpu_model_cuda_input_fails(self):
         """CPU model with CUDA input should raise error"""
         model = Z2EquivariantRNN(input_dim=4, hidden_dim=8, output_dim=4)
-        x = torch.randn(2, 10, 4, device='cuda')
+        x = torch.randn(2, 10, 4, device="cuda")
 
         with pytest.raises(RuntimeError):
             model(x)
@@ -187,7 +187,7 @@ class TestMixedDeviceErrors:
         model = Z2EquivariantRNN(input_dim=4, hidden_dim=8, output_dim=4)
         model = model.cuda()
 
-        x = torch.randn(2, 10, 4, device='cpu')
+        x = torch.randn(2, 10, 4, device="cpu")
 
         with pytest.raises(RuntimeError):
             model(x)
@@ -212,7 +212,7 @@ class TestDeviceConsistency:
         model = Z2EquivariantRNN(input_dim=4, hidden_dim=8, output_dim=4)
         model = model.cuda()
 
-        x = torch.randn(2, 10, 4, device='cuda')
+        x = torch.randn(2, 10, 4, device="cuda")
 
         outputs, h = model(x)
 
@@ -221,7 +221,7 @@ class TestDeviceConsistency:
 
     def test_gate_device_consistency(self):
         """Gates should be on same device as inputs"""
-        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type='fixed')
+        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type="fixed")
         x = torch.randn(2, 10, 4)
 
         outputs, h, gates = model(x)
@@ -231,10 +231,10 @@ class TestDeviceConsistency:
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_gate_device_consistency_cuda(self):
         """Gates should be on same device as inputs (CUDA)"""
-        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type='fixed')
+        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type="fixed")
         model = model.cuda()
 
-        x = torch.randn(2, 10, 4, device='cuda')
+        x = torch.randn(2, 10, 4, device="cuda")
 
         outputs, h, gates = model(x)
 
@@ -284,7 +284,7 @@ class TestStepMethodDimensions:
 
     def test_seam_gated_step_with_2d_inputs(self):
         """SeamGatedRNN step should work with 2D (batched) inputs"""
-        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type='fixed')
+        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type="fixed")
 
         x = torch.randn(2, 4)
         h = torch.randn(2, 8)
@@ -296,7 +296,7 @@ class TestStepMethodDimensions:
 
     def test_seam_gated_step_with_1d_inputs(self):
         """SeamGatedRNN step should work with 1D (unbatched) inputs"""
-        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type='fixed')
+        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type="fixed")
 
         x = torch.randn(4)
         h = torch.randn(8)
@@ -308,7 +308,7 @@ class TestStepMethodDimensions:
 
     def test_seam_gated_step_with_mixed_dimensions(self):
         """SeamGatedRNN step should handle mixed 1D/2D inputs"""
-        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type='kstar')
+        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type="kstar")
 
         # Case: 2D x, 1D h (like in test_09_visualization.py)
         x = torch.randn(1, 4)
@@ -329,7 +329,7 @@ class TestNoDeviceHardcoding:
         x = torch.randn(2, 10, 4)
         outputs, h = model(x, h=None)
 
-        assert h.device.type == 'cpu'
+        assert h.device.type == "cpu"
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_zero_tensors_respect_input_device_cuda(self):
@@ -338,10 +338,10 @@ class TestNoDeviceHardcoding:
         model = model.cuda()
 
         # Test with None hidden state on CUDA
-        x = torch.randn(2, 10, 4, device='cuda')
+        x = torch.randn(2, 10, 4, device="cuda")
         outputs, h = model(x, h=None)
 
-        assert h.device.type == 'cuda'
+        assert h.device.type == "cuda"
 
     @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
     def test_parity_energy_respects_device(self):
@@ -351,7 +351,7 @@ class TestNoDeviceHardcoding:
         projectors = projectors.cuda()
 
         # Test with zero norm
-        h = torch.zeros(2, 8, device='cuda')
+        h = torch.zeros(2, 8, device="cuda")
         alpha = projectors.parity_energy(h)
 
-        assert alpha.device.type == 'cuda'
+        assert alpha.device.type == "cuda"

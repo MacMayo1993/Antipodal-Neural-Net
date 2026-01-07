@@ -43,11 +43,11 @@ def set_seed(seed: int, deterministic: bool = True) -> None:
 
         # Note: Some operations may not have deterministic implementations
         # This will warn rather than error
-        if hasattr(torch, 'use_deterministic_algorithms'):
+        if hasattr(torch, "use_deterministic_algorithms"):
             torch.use_deterministic_algorithms(True, warn_only=True)
 
 
-def create_generator(seed: Optional[int] = None, device: str = 'cpu') -> torch.Generator:
+def create_generator(seed: Optional[int] = None, device: str = "cpu") -> torch.Generator:
     """
     Create a torch.Generator with optional seed for reproducible random operations.
 
@@ -81,13 +81,13 @@ def get_rng_state() -> dict:
         >>> set_rng_state(state)  # Restore state
     """
     state = {
-        'python': random.getstate(),
-        'numpy': np.random.get_state(),
-        'torch': torch.get_rng_state(),
+        "python": random.getstate(),
+        "numpy": np.random.get_state(),
+        "torch": torch.get_rng_state(),
     }
 
     if torch.cuda.is_available():
-        state['torch_cuda'] = torch.cuda.get_rng_state_all()
+        state["torch_cuda"] = torch.cuda.get_rng_state_all()
 
     return state
 
@@ -104,9 +104,9 @@ def set_rng_state(state: dict) -> None:
         >>> # ... some random operations ...
         >>> set_rng_state(state)  # Restore state
     """
-    random.setstate(state['python'])
-    np.random.set_state(state['numpy'])
-    torch.set_rng_state(state['torch'])
+    random.setstate(state["python"])
+    np.random.set_state(state["numpy"])
+    torch.set_rng_state(state["torch"])
 
-    if 'torch_cuda' in state and torch.cuda.is_available():
-        torch.cuda.set_rng_state_all(state['torch_cuda'])
+    if "torch_cuda" in state and torch.cuda.is_available():
+        torch.cuda.set_rng_state_all(state["torch_cuda"])

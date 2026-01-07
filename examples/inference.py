@@ -9,38 +9,35 @@ This script demonstrates how to:
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-from src import (
-    AntipodalRegimeSwitcher,
-    SeamGatedRNN,
-    GRUBaseline,
-    find_regime_switches
-)
+from src import AntipodalRegimeSwitcher, SeamGatedRNN, GRUBaseline, find_regime_switches
 
 
 def load_model(checkpoint_path):
     """Load a trained model from checkpoint"""
     checkpoint = torch.load(checkpoint_path)
 
-    model_type = checkpoint['model_type']
-    hidden_dim = checkpoint['hidden_dim']
-    obs_dim = checkpoint['obs_dim']
+    model_type = checkpoint["model_type"]
+    hidden_dim = checkpoint["hidden_dim"]
+    obs_dim = checkpoint["obs_dim"]
 
-    if model_type == 'GRU':
+    if model_type == "GRU":
         model = GRUBaseline(obs_dim, hidden_dim, obs_dim)
-    elif model_type == 'Z2_equi':
+    elif model_type == "Z2_equi":
         from src.models import Z2EquivariantRNN
+
         model = Z2EquivariantRNN(obs_dim, hidden_dim, obs_dim)
-    elif model_type in ['Z2_fixed', 'Z2_learn', 'Z2_kstar']:
-        gate_type = model_type.split('_')[1]
+    elif model_type in ["Z2_fixed", "Z2_learn", "Z2_kstar"]:
+        gate_type = model_type.split("_")[1]
         model = SeamGatedRNN(obs_dim, hidden_dim, obs_dim, gate_type=gate_type)
 
-    model.load_state_dict(checkpoint['model_state_dict'])
+    model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
 
     return model, checkpoint
@@ -53,10 +50,10 @@ def predict_sequence(model, observations):
     X = observations[:-1].unsqueeze(0)
 
     with torch.no_grad():
-        if hasattr(model, 'gru'):
+        if hasattr(model, "gru"):
             y_pred, hidden_states, _ = model(X)
             gates = None
-        elif hasattr(model, 'gate_type'):
+        elif hasattr(model, "gate_type"):
             y_pred, hidden_states, gates = model(X)
             gates = gates.squeeze(0)
         else:
@@ -110,7 +107,7 @@ def main():
         latent_dim=latent_dim,
         obs_dim=obs_dim,
         p_switch=0.1,  # Higher switch probability for demonstration
-        seed=42
+        seed=42,
     )
 
     test_obs, test_latents, test_regimes = generator.generate_sequence(T=500)
@@ -119,7 +116,7 @@ def main():
 
     # Quick training for demonstration
     print("\n[2/3] Training a quick model for demonstration...")
-    model = SeamGatedRNN(obs_dim, hidden_dim, obs_dim, gate_type='kstar')
+    model = SeamGatedRNN(obs_dim, hidden_dim, obs_dim, gate_type="kstar")
 
     train_obs, _, _ = generator.generate_sequence(T=1000)
     X_train = train_obs[:-1].unsqueeze(0)

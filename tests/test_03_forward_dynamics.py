@@ -21,12 +21,7 @@ class TestEquivariantForward:
         - P₊h_{t+1} depends only on P₊h_t
         - P₋h_{t+1} depends only on P₋h_t
         """
-        model = Z2EquivariantRNN(
-            input_dim=5,
-            hidden_dim=10,
-            output_dim=3,
-            even_dim=5
-        )
+        model = Z2EquivariantRNN(input_dim=5, hidden_dim=10, output_dim=3, even_dim=5)
         model.eval()
 
         parity_op = ParityOperator(10, 5)
@@ -80,26 +75,24 @@ class TestEquivariantForward:
         W_even_to_odd = W_hidden[even_dim:, :even_dim]
         W_odd_to_even = W_hidden[:even_dim, even_dim:]
 
-        assert torch.allclose(W_even_to_odd, torch.zeros_like(W_even_to_odd), atol=1e-6), \
-            "Even-to-odd coupling present in equivariant model"
-        assert torch.allclose(W_odd_to_even, torch.zeros_like(W_odd_to_even), atol=1e-6), \
-            "Odd-to-even coupling present in equivariant model"
+        assert torch.allclose(
+            W_even_to_odd, torch.zeros_like(W_even_to_odd), atol=1e-6
+        ), "Even-to-odd coupling present in equivariant model"
+        assert torch.allclose(
+            W_odd_to_even, torch.zeros_like(W_odd_to_even), atol=1e-6
+        ), "Odd-to-even coupling present in equivariant model"
 
     def test_equivariant_no_parity_mixing(self):
         """Verify no parity mixing in equivariant model"""
-        model = Z2EquivariantRNN(
-            input_dim=3,
-            hidden_dim=8,
-            output_dim=2,
-            even_dim=4
-        )
+        model = Z2EquivariantRNN(input_dim=3, hidden_dim=8, output_dim=2, even_dim=4)
 
         # Check that model structure enforces no mixing
         W_comm, W_flip = model.get_weight_matrices()
 
         # W_flip should be zero (no seam coupling)
-        assert torch.allclose(W_flip, torch.zeros_like(W_flip)), \
-            "Equivariant model has non-zero flip weights"
+        assert torch.allclose(
+            W_flip, torch.zeros_like(W_flip)
+        ), "Equivariant model has non-zero flip weights"
 
 
 class TestSeamCoupling:
@@ -114,9 +107,9 @@ class TestSeamCoupling:
             input_dim=3,
             hidden_dim=8,
             output_dim=2,
-            gate_type='fixed',
+            gate_type="fixed",
             fixed_gate_value=1.0,  # Gate always on
-            even_dim=4
+            even_dim=4,
         )
         model.eval()
 
@@ -145,9 +138,9 @@ class TestSeamCoupling:
             input_dim=3,
             hidden_dim=8,
             output_dim=2,
-            gate_type='fixed',
+            gate_type="fixed",
             fixed_gate_value=0.0,  # Gate always off
-            even_dim=4
+            even_dim=4,
         )
         model_gate_off.eval()
 
@@ -167,11 +160,7 @@ class TestSeamCoupling:
     def test_seam_gate_range(self):
         """Verify gate output is in (0, 1)"""
         model = SeamGatedRNN(
-            input_dim=3,
-            hidden_dim=8,
-            output_dim=2,
-            gate_type='learned',
-            even_dim=4
+            input_dim=3, hidden_dim=8, output_dim=2, gate_type="learned", even_dim=4
         )
 
         torch.manual_seed(42)
@@ -179,8 +168,7 @@ class TestSeamCoupling:
 
         g = model.compute_gate(h)
 
-        assert torch.all(g >= 0) and torch.all(g <= 1), \
-            f"Gate values outside [0,1]: {g}"
+        assert torch.all(g >= 0) and torch.all(g <= 1), f"Gate values outside [0,1]: {g}"
 
     def test_fixed_gate_value(self):
         """Verify fixed gate returns constant value"""
@@ -190,16 +178,17 @@ class TestSeamCoupling:
             input_dim=3,
             hidden_dim=8,
             output_dim=2,
-            gate_type='fixed',
+            gate_type="fixed",
             fixed_gate_value=fixed_value,
-            even_dim=4
+            even_dim=4,
         )
 
         h = torch.randn(4, 8)
         g = model.compute_gate(h)
 
-        assert torch.allclose(g, torch.full_like(g, fixed_value)), \
-            f"Fixed gate not returning {fixed_value}"
+        assert torch.allclose(
+            g, torch.full_like(g, fixed_value)
+        ), f"Fixed gate not returning {fixed_value}"
 
 
 class TestForwardPassShapes:
@@ -207,11 +196,7 @@ class TestForwardPassShapes:
 
     def test_equivariant_forward_shapes(self):
         """Verify output shapes for equivariant model"""
-        model = Z2EquivariantRNN(
-            input_dim=5,
-            hidden_dim=10,
-            output_dim=3
-        )
+        model = Z2EquivariantRNN(input_dim=5, hidden_dim=10, output_dim=3)
 
         # Single step
         x = torch.randn(2, 5)  # Batch of 2
@@ -229,12 +214,7 @@ class TestForwardPassShapes:
 
     def test_seam_gated_forward_shapes(self):
         """Verify output shapes for seam-gated model"""
-        model = SeamGatedRNN(
-            input_dim=5,
-            hidden_dim=10,
-            output_dim=3,
-            gate_type='learned'
-        )
+        model = SeamGatedRNN(input_dim=5, hidden_dim=10, output_dim=3, gate_type="learned")
 
         # Single step
         x = torch.randn(2, 5)

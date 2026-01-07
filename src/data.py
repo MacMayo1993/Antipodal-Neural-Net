@@ -35,7 +35,7 @@ class AntipodalRegimeSwitcher:
         p_switch: float = 0.05,
         obs_noise_std: float = 0.1,
         latent_noise_std: float = 0.05,
-        seed: Optional[int] = None
+        seed: Optional[int] = None,
     ):
         """
         Args:
@@ -80,7 +80,9 @@ class AntipodalRegimeSwitcher:
             # Verify stability after scaling
             eigenvalues = torch.linalg.eigvals(A)
             spectral_radius = torch.max(torch.abs(eigenvalues)).item()
-            assert spectral_radius < 1.0, f"Failed to stabilize dynamics: spectral radius = {spectral_radius}"
+            assert (
+                spectral_radius < 1.0
+            ), f"Failed to stabilize dynamics: spectral radius = {spectral_radius}"
 
         return A
 
@@ -100,7 +102,7 @@ class AntipodalRegimeSwitcher:
         T: int,
         initial_regime: int = 0,
         initial_state: Optional[torch.Tensor] = None,
-        generator: Optional[torch.Generator] = None
+        generator: Optional[torch.Generator] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Generate antipodal regime-switching sequence.
@@ -155,7 +157,7 @@ class AntipodalRegimeSwitcher:
         return (
             torch.stack(observations),
             torch.stack(latents),
-            torch.tensor(regimes, dtype=torch.long)
+            torch.tensor(regimes, dtype=torch.long),
         )
 
     def verify_antipodal_symmetry(self, z: torch.Tensor, regime_a: bool = True) -> float:
@@ -202,7 +204,7 @@ def create_train_test_split(
     generator: AntipodalRegimeSwitcher,
     train_length: int,
     test_length: int,
-    seed: Optional[int] = None
+    seed: Optional[int] = None,
 ) -> Tuple[dict, dict]:
     """
     Create train/test split with separate sequences.
@@ -224,6 +226,7 @@ def create_train_test_split(
     if seed is not None:
         _set_seed(seed)
         from .seed import create_generator
+
         train_gen = create_generator(seed)
         test_gen = create_generator(seed + 1)
 
@@ -237,22 +240,16 @@ def create_train_test_split(
         test_length, generator=test_gen
     )
 
-    train_data = {
-        'obs': train_obs,
-        'latents': train_latents,
-        'regimes': train_regimes
-    }
+    train_data = {"obs": train_obs, "latents": train_latents, "regimes": train_regimes}
 
-    test_data = {
-        'obs': test_obs,
-        'latents': test_latents,
-        'regimes': test_regimes
-    }
+    test_data = {"obs": test_obs, "latents": test_latents, "regimes": test_regimes}
 
     return train_data, test_data
 
 
-def find_regime_switches(regimes: torch.Tensor, window: int = 20) -> Tuple[torch.Tensor, torch.Tensor]:
+def find_regime_switches(
+    regimes: torch.Tensor, window: int = 20
+) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Find regime switch times and create transition windows.
 
@@ -265,7 +262,7 @@ def find_regime_switches(regimes: torch.Tensor, window: int = 20) -> Tuple[torch
         transition_mask: (T,) boolean tensor, True in ±window around switches
     """
     # Find switch points
-    switches = (regimes[1:] != regimes[:-1])
+    switches = regimes[1:] != regimes[:-1]
     switch_times = torch.where(switches)[0] + 1  # +1 because we compared [1:] with [:-1]
 
     # Create transition mask

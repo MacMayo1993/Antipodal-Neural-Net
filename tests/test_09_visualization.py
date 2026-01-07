@@ -22,15 +22,12 @@ class TestGateSwitchAlignment:
         Mean peak should be at Δt ≈ 0.
         """
         # Generate data
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=8, obs_dim=4, p_switch=0.1, seed=42
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=8, obs_dim=4, p_switch=0.1, seed=42)
         obs, _, regimes = generator.generate_sequence(T=500)
 
         # Create model with k* gate
         model = SeamGatedRNN(
-            input_dim=4, hidden_dim=12, output_dim=4,
-            gate_type='kstar', kstar=0.721, tau=0.1
+            input_dim=4, hidden_dim=12, output_dim=4, gate_type="kstar", kstar=0.721, tau=0.1
         )
 
         # Forward pass to get gates
@@ -64,8 +61,9 @@ class TestGateSwitchAlignment:
         mean_peak_offset = np.mean(gate_peaks)
 
         # Allow some tolerance since gates may peak slightly before/after
-        assert abs(mean_peak_offset) < 5, \
-            f"Gate peaks not aligned with switches: mean offset = {mean_peak_offset}"
+        assert (
+            abs(mean_peak_offset) < 5
+        ), f"Gate peaks not aligned with switches: mean offset = {mean_peak_offset}"
 
 
 class TestAlphaPhaseTransition:
@@ -76,15 +74,12 @@ class TestAlphaPhaseTransition:
         Verify α₋(t) crosses k* near regime switches.
         """
         # Generate data
-        generator = AntipodalRegimeSwitcher(
-            latent_dim=8, obs_dim=4, p_switch=0.1, seed=42
-        )
+        generator = AntipodalRegimeSwitcher(latent_dim=8, obs_dim=4, p_switch=0.1, seed=42)
         obs, _, regimes = generator.generate_sequence(T=500)
 
         # Create model
         model = SeamGatedRNN(
-            input_dim=4, hidden_dim=12, output_dim=4,
-            gate_type='kstar', kstar=0.721
+            input_dim=4, hidden_dim=12, output_dim=4, gate_type="kstar", kstar=0.721
         )
 
         # Forward pass to get hidden states
@@ -151,10 +146,7 @@ class TestVisualizationUtilities:
 
     def test_gate_extraction(self):
         """Verify we can extract gate values from model"""
-        model = SeamGatedRNN(
-            input_dim=4, hidden_dim=12, output_dim=4,
-            gate_type='kstar'
-        )
+        model = SeamGatedRNN(input_dim=4, hidden_dim=12, output_dim=4, gate_type="kstar")
 
         obs = torch.randn(1, 100, 4)
         _, _, gates = model(obs)
