@@ -211,5 +211,6 @@ artifacts/metrics.csv
 artifacts/table_*.tex
 artifacts/figures/*.png
 artifacts/figures/*.pdf
+artifacts/demo/
 *.log
 .DS_Store

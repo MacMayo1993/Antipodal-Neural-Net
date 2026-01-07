@@ -88,7 +88,7 @@ class Z2EquivariantRNN(nn.Module):
         outputs = torch.stack(outputs, dim=1)
 
         if single_step:
-            outputs = outputs.squeeze(1)
+            outputs = outputs.squeeze(1) if outputs.dim() > 2 else outputs
 
         return outputs, h
 
@@ -236,8 +236,8 @@ class SeamGatedRNN(nn.Module):
         gates = torch.stack(gates, dim=1)
 
         if single_step:
-            outputs = outputs.squeeze(1)
-            gates = gates.squeeze(1)
+            outputs = outputs.squeeze(1) if outputs.dim() > 2 else outputs
+            gates = gates.squeeze(1) if gates.dim() > 1 else gates
 
         return outputs, h, gates
 
@@ -318,11 +318,12 @@ class GRUBaseline(nn.Module):
         """
         Args:
             x: (batch, seq_len, input_dim) or (batch, input_dim)
-            h: Initial hidden state
+            h: Initial hidden state (batch, hidden_dim) or None
 
         Returns:
             outputs: (batch, seq_len, output_dim) or (batch, output_dim)
-            h_final: (1, batch, hidden_dim)
+            h_final: (batch, hidden_dim)
+            gates: Dummy gates for API compatibility
         """
         if x.dim() == 2:
             x = x.unsqueeze(1)
@@ -330,11 +331,18 @@ class GRUBaseline(nn.Module):
         else:
             single_step = False
 
+        # Expand h to GRU's expected (num_layers, batch, hidden) format if needed
+        if h is not None and h.dim() == 2:
+            h = h.unsqueeze(0)
+
         h_out, h_final = self.gru(x, h)
         outputs = self.output_layer(h_out)
 
         if single_step:
             outputs = outputs.squeeze(1)
+
+        # Squeeze h_final to (batch, hidden_dim) for consistency with other models
+        h_final = h_final.squeeze(0)
 
         # Return dummy gates for compatibility
         gates = torch.zeros(outputs.shape[0], outputs.shape[1] if outputs.dim() > 2 else 1, device=x.device)

@@ -18,6 +18,10 @@ git clone https://github.com/MacMayo1993/Antipodal-Neural-Net.git
 cd Antipodal-Neural-Net
 pip install -e .
 antipodal-demo
+
+# Or using Makefile
+make install
+make demo
 ```
 
 **Expected output:**
@@ -86,9 +90,20 @@ pytest --cov=src --cov-report=html
 
 ### Running Benchmarks
 
+**Quick option (using Makefile):**
+```bash
+make benchmark  # Run full benchmark
+make tables     # Generate LaTeX tables
+make figures    # Generate publication figures
+```
+
+**Or use scripts directly:**
 ```bash
 # Full benchmark (all models, all seeds)
 python scripts/run_benchmark.py
+
+# Customized benchmark (deterministic, reproducible)
+python scripts/run_benchmark.py --seeds 42 123 --steps 100 --outdir results/run_001
 
 # Generate LaTeX tables
 python scripts/make_tables.py
@@ -97,7 +112,13 @@ python scripts/make_tables.py
 python scripts/make_figures.py
 ```
 
-**Expected runtime:** Benchmark ~20-30 min, tables ~1 sec, figures ~5-10 min
+**Expected runtime:** Benchmark ~20-30 min (5 seeds × 500 steps), tables ~1 sec, figures ~5-10 min
+
+**Benchmark flags:**
+- `--seeds 42 123`: Specify custom seeds (default: 42 123 456 789 1011)
+- `--steps 500`: Training steps per model (default: 500)
+- `--outdir artifacts`: Output directory (default: artifacts)
+- `--device cpu`: Device to use: cpu or cuda (default: cpu)
 
 See `scripts/README.md` for detailed documentation.
 
@@ -148,6 +169,9 @@ Antipodal-Neural-Net/
 ├── PROJECT_INTENT.md      # Detailed project goals and design
 ├── CONTRIBUTING.md        # Development guidelines
 ├── CHANGELOG.md           # Version history
+├── CITATION.cff           # Citation metadata
+├── SECURITY.md            # Security policy
+├── Makefile               # Quick commands (make demo, make test, etc.)
 ├── pyproject.toml         # Package configuration
 ├── requirements.txt       # Python dependencies
 └── LICENSE                # MIT License
