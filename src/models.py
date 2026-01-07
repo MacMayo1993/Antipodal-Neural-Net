@@ -101,6 +101,14 @@ class Z2EquivariantRNN(nn.Module):
 
     def step(self, x: torch.Tensor, h: torch.Tensor) -> torch.Tensor:
         """Single RNN step with commutant weights only"""
+        # Ensure both inputs have batch dimension for consistent processing
+        squeeze_output = False
+        if x.dim() == 1:
+            x = x.unsqueeze(0)
+            squeeze_output = True
+        if h.dim() == 1:
+            h = h.unsqueeze(0)
+
         # Extract even and odd components directly (first even_dim, last odd_dim)
         h_even = h[..., :self.even_dim]
         h_odd = h[..., self.even_dim:]
@@ -118,6 +126,10 @@ class Z2EquivariantRNN(nn.Module):
 
         # Activation
         h_next = torch.tanh(h_next)
+
+        # Restore original dimensionality
+        if squeeze_output:
+            h_next = h_next.squeeze(0)
 
         return h_next
 
@@ -257,6 +269,14 @@ class SeamGatedRNN(nn.Module):
 
     def step(self, x: torch.Tensor, h: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Single RNN step with seam gate"""
+        # Ensure both inputs have batch dimension for consistent processing
+        squeeze_output = False
+        if x.dim() == 1:
+            x = x.unsqueeze(0)
+            squeeze_output = True
+        if h.dim() == 1:
+            h = h.unsqueeze(0)
+
         # Compute gate
         g = self.compute_gate(h)
 
@@ -290,6 +310,11 @@ class SeamGatedRNN(nn.Module):
 
         h_next = torch.cat([h_even_next, h_odd_next], dim=-1) + self.bias
         h_next = torch.tanh(h_next)
+
+        # Restore original dimensionality
+        if squeeze_output:
+            h_next = h_next.squeeze(0)
+            g = g.squeeze(0)
 
         return h_next, g
 

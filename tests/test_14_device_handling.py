@@ -241,6 +241,83 @@ class TestDeviceConsistency:
         assert gates.device == x.device
 
 
+class TestStepMethodDimensions:
+    """Test that step methods handle both 1D and 2D inputs"""
+
+    def test_z2_step_with_2d_inputs(self):
+        """Z2EquivariantRNN step should work with 2D (batched) inputs"""
+        model = Z2EquivariantRNN(input_dim=4, hidden_dim=8, output_dim=4)
+
+        x = torch.randn(2, 4)  # batch=2, input_dim=4
+        h = torch.randn(2, 8)  # batch=2, hidden_dim=8
+
+        h_next = model.step(x, h)
+
+        assert h_next.shape == (2, 8), f"Expected (2, 8), got {h_next.shape}"
+
+    def test_z2_step_with_1d_inputs(self):
+        """Z2EquivariantRNN step should work with 1D (unbatched) inputs"""
+        model = Z2EquivariantRNN(input_dim=4, hidden_dim=8, output_dim=4)
+
+        x = torch.randn(4)  # input_dim=4
+        h = torch.randn(8)  # hidden_dim=8
+
+        h_next = model.step(x, h)
+
+        assert h_next.shape == (8,), f"Expected (8,), got {h_next.shape}"
+
+    def test_z2_step_with_mixed_dimensions(self):
+        """Z2EquivariantRNN step should handle mixed 1D/2D inputs"""
+        model = Z2EquivariantRNN(input_dim=4, hidden_dim=8, output_dim=4)
+
+        # Case 1: 2D x, 1D h
+        x = torch.randn(1, 4)
+        h = torch.randn(8)
+        h_next = model.step(x, h)
+        assert h_next.shape == (8,), f"Expected (8,), got {h_next.shape}"
+
+        # Case 2: 1D x, 2D h
+        x = torch.randn(4)
+        h = torch.randn(1, 8)
+        h_next = model.step(x, h)
+        assert h_next.shape == (8,), f"Expected (8,), got {h_next.shape}"
+
+    def test_seam_gated_step_with_2d_inputs(self):
+        """SeamGatedRNN step should work with 2D (batched) inputs"""
+        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type='fixed')
+
+        x = torch.randn(2, 4)
+        h = torch.randn(2, 8)
+
+        h_next, g = model.step(x, h)
+
+        assert h_next.shape == (2, 8), f"Expected (2, 8), got {h_next.shape}"
+        assert g.shape == (2,), f"Expected (2,), got {g.shape}"
+
+    def test_seam_gated_step_with_1d_inputs(self):
+        """SeamGatedRNN step should work with 1D (unbatched) inputs"""
+        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type='fixed')
+
+        x = torch.randn(4)
+        h = torch.randn(8)
+
+        h_next, g = model.step(x, h)
+
+        assert h_next.shape == (8,), f"Expected (8,), got {h_next.shape}"
+        assert g.shape == (), f"Expected scalar, got {g.shape}"
+
+    def test_seam_gated_step_with_mixed_dimensions(self):
+        """SeamGatedRNN step should handle mixed 1D/2D inputs"""
+        model = SeamGatedRNN(input_dim=4, hidden_dim=8, output_dim=4, gate_type='kstar')
+
+        # Case: 2D x, 1D h (like in test_09_visualization.py)
+        x = torch.randn(1, 4)
+        h = torch.randn(8)
+        h_next, g = model.step(x, h)
+        assert h_next.shape == (8,), f"Expected (8,), got {h_next.shape}"
+        assert g.shape == (), f"Expected scalar, got {g.shape}"
+
+
 class TestNoDeviceHardcoding:
     """Test that no device is hardcoded"""
 
