@@ -100,13 +100,15 @@ class Z2EquivariantRNN(nn.Module):
 
     def step(self, x: torch.Tensor, h: torch.Tensor) -> torch.Tensor:
         """Single RNN step with commutant weights only"""
-        # Track original h dimensionality to restore at the end
+        # Track if either input is unbatched (1D) - if so, return unbatched output
+        x_was_1d = x.dim() == 1
         h_was_1d = h.dim() == 1
+        return_1d = x_was_1d or h_was_1d
 
         # Ensure both inputs have batch dimension for consistent processing
-        if x.dim() == 1:
+        if x_was_1d:
             x = x.unsqueeze(0)
-        if h.dim() == 1:
+        if h_was_1d:
             h = h.unsqueeze(0)
 
         # Extract even and odd components directly (first even_dim, last odd_dim)
@@ -127,8 +129,8 @@ class Z2EquivariantRNN(nn.Module):
         # Activation
         h_next = torch.tanh(h_next)
 
-        # Restore original dimensionality - squeeze if h was originally 1D
-        if h_was_1d:
+        # Restore original dimensionality - squeeze if either input was 1D
+        if return_1d and h_next.size(0) == 1:
             h_next = h_next.squeeze(0)
 
         return h_next
@@ -270,13 +272,15 @@ class SeamGatedRNN(nn.Module):
 
     def step(self, x: torch.Tensor, h: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Single RNN step with seam gate"""
-        # Track original h dimensionality to restore at the end
+        # Track if either input is unbatched (1D) - if so, return unbatched output
+        x_was_1d = x.dim() == 1
         h_was_1d = h.dim() == 1
+        return_1d = x_was_1d or h_was_1d
 
         # Ensure both inputs have batch dimension for consistent processing
-        if x.dim() == 1:
+        if x_was_1d:
             x = x.unsqueeze(0)
-        if h.dim() == 1:
+        if h_was_1d:
             h = h.unsqueeze(0)
 
         # Compute gate
@@ -313,8 +317,8 @@ class SeamGatedRNN(nn.Module):
         h_next = torch.cat([h_even_next, h_odd_next], dim=-1) + self.bias
         h_next = torch.tanh(h_next)
 
-        # Restore original dimensionality - squeeze if h was originally 1D
-        if h_was_1d:
+        # Restore original dimensionality - squeeze if either input was 1D
+        if return_1d and h_next.size(0) == 1:
             h_next = h_next.squeeze(0)
             g = g.squeeze(0)
 
